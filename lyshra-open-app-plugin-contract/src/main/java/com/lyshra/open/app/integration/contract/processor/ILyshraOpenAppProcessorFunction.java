@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 @FunctionalInterface
 public interface ILyshraOpenAppProcessorFunction {
-    Mono<ILyshraOpenAppProcessorResult<? extends ILyshraOpenAppProcessorIO>> process(
+    Mono<ILyshraOpenAppProcessorResult> process(
             ILyshraOpenAppProcessorInputConfig inputConfig,
             ILyshraOpenAppContext context,
             ILyshraOpenAppPluginFacade facade) throws LyshraOpenAppProcessorRuntimeException;

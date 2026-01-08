@@ -1,6 +1,8 @@
 package com.lyshra.open.app.core.engine;
 
 import com.lyshra.open.app.core.engine.config.LyshraOpenAppSystemConfigEngine;
+import com.lyshra.open.app.core.engine.database.ILyshraOpenAppDatasourceEngine;
+import com.lyshra.open.app.core.engine.database.impl.LyshraOpenAppDatasourceEngineImpl;
 import com.lyshra.open.app.core.engine.documentation.ILyshraOpenAppPluginDocumentationService;
 import com.lyshra.open.app.core.engine.documentation.impl.LyshraOpenAppPluginDocumentationService;
 import com.lyshra.open.app.core.engine.expression.LyshraOpenAppExpressionEvaluator;
@@ -14,7 +16,9 @@ import com.lyshra.open.app.core.engine.node.impl.LyshraOpenAppProcessorExecutor;
 import com.lyshra.open.app.core.engine.node.impl.LyshraOpenAppWorkflowExecutor;
 import com.lyshra.open.app.core.engine.node.impl.LyshraOpenAppWorkflowStepExecutor;
 import com.lyshra.open.app.core.engine.plugin.ILyshraOpenAppPluginFactory;
+import com.lyshra.open.app.core.engine.plugin.ILyshraOpenAppPluginLoader;
 import com.lyshra.open.app.core.engine.plugin.impl.LyshraOpenAppPluginFactory;
+import com.lyshra.open.app.core.engine.plugin.impl.LyshraOpenAppPluginLoader;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppExpressionEvaluator;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppObjectMapper;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppSystemConfigEngine;
@@ -39,6 +43,16 @@ public class LyshraOpenAppFacade implements ILyshraOpenAppFacade {
     @Override
     public ILyshraOpenAppPluginMessageSource getCoreEngineMessageSource() {
         return coreEngineMessageSource;
+    }
+
+    @Override
+    public ILyshraOpenAppDatasourceEngine getDatasourceEngine() {
+        return LyshraOpenAppDatasourceEngineImpl.getInstance();
+    }
+
+    @Override
+    public ILyshraOpenAppPluginLoader getPluginLoader() {
+        return LyshraOpenAppPluginLoader.getInstance();
     }
 
     @Override

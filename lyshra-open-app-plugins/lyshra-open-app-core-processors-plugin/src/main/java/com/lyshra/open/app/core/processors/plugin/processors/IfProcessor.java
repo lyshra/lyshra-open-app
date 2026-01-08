@@ -3,10 +3,10 @@ package com.lyshra.open.app.core.processors.plugin.processors;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppErrorInfo;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppExpression;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorInputConfig;
+import com.lyshra.open.app.integration.enumerations.LyshraOpenAppExpressionType;
 import com.lyshra.open.app.integration.enumerations.LyshraOpenAppHttpStatus;
-import com.lyshra.open.app.integration.exception.LyshraOpenAppProcessorRuntimeException;
 import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorDefinition;
-import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorOutputResult;
+import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorOutput;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -23,6 +23,9 @@ public class IfProcessor {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class IfProcessorInputConfig implements ILyshraOpenAppProcessorInputConfig, ILyshraOpenAppExpression {
+
+        private final LyshraOpenAppExpressionType expressionType = LyshraOpenAppExpressionType.GRAAALVM_JS;
+
         @NotBlank(message = "{if.processor.input.expression.null}")
         @Size(min = 3, max = 999, message = "{if.processor.input.expression.invalid.length}")
         private String expression;
@@ -31,10 +34,6 @@ public class IfProcessor {
     @AllArgsConstructor
     @Getter
     public enum IfProcessorErrorCodes implements ILyshraOpenAppErrorInfo {
-        IF_PROCESSOR_INPUT_IS_NULL("ERR001", LyshraOpenAppHttpStatus.BAD_REQUEST, "IF_PROCESSOR_INPUT_IS_NULL", "PROVIDE_IF_PROCESSOR_INPUT"),
-        IF_PROCESSOR_INPUT_EXPRESSION_CONFIG_IS_NULL("ERR002", LyshraOpenAppHttpStatus.BAD_REQUEST, "IF_PROCESSOR_INPUT_EXPRESSION_CONFIG_IS_NULL", "PROVIDE_IF_PROCESSOR_INPUT_EXPRESSION_CONFIG"),
-        IF_PROCESSOR_INPUT_EXPRESSION_TYPE_NULL("ERR003", LyshraOpenAppHttpStatus.BAD_REQUEST, "IF_PROCESSOR_INPUT_EXPRESSION_TYPE_NULL", "PROVIDE_IF_PROCESSOR_INPUT_EXPRESSION_TYPE"),
-        IF_PROCESSOR_INPUT_EXPRESSION_IS_NULL("ERRO04", LyshraOpenAppHttpStatus.BAD_REQUEST, "IF_PROCESSOR_INPUT_EXPRESSION_IS_NULL", "PROVIDE_IF_PROCESSOR_INPUT_EXPRESSION"),
         ;
 
         private final String errorCode;
@@ -48,23 +47,18 @@ public class IfProcessor {
 
         return processorBuilder
                 .name("IF_PROCESSOR")
+                .humanReadableNameTemplate("if.processor.name")
+                .searchTagsCsvTemplate("if.processor.search.tags")
                 .errorCodeEnum(IfProcessorErrorCodes.class)
                 .inputConfigType(IfProcessorInputConfig.class)
                 .sampleInputConfigs(List.of(
-                        new IfProcessorInputConfig("$context.field1.subField2.subField3.size() == 4")
+                        new IfProcessorInputConfig("result = $data.field1.subField2.subField3.size() == 4")
                 ))
-                .validateInputConfig(input -> {
-                    IfProcessorInputConfig ifProcessorInputConfig = (IfProcessorInputConfig) input;
-                    if (ifProcessorInputConfig == null) {
-                        throw new LyshraOpenAppProcessorRuntimeException(IfProcessorErrorCodes.IF_PROCESSOR_INPUT_IS_NULL);
-                    } else if (ifProcessorInputConfig.getExpression() == null) {
-                        throw new LyshraOpenAppProcessorRuntimeException(IfProcessorErrorCodes.IF_PROCESSOR_INPUT_EXPRESSION_CONFIG_IS_NULL);
-                    }
-                })
+                .validateInputConfig(input -> {})
                 .process((input, context, facade) -> {
                     IfProcessorInputConfig ifProcessorInputConfig = (IfProcessorInputConfig) input;
                     Boolean value = facade.getExpressionExecutor().evaluateBoolean(ifProcessorInputConfig, context, facade);
-                    return Mono.just(new LyshraOpenAppProcessorOutputResult<>(value.toString()));
+                    return Mono.just(LyshraOpenAppProcessorOutput.ofBranch(value));
                 });
     }
 

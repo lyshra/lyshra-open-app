@@ -30,28 +30,33 @@ public class LyshraOpenAppWorkflowStepExecutionException extends RuntimeExceptio
 
     public LyshraOpenAppWorkflowStepExecutionException(
             ILyshraOpenAppWorkflowStepIdentifier workflowStepIdentifier,
-            LyshraOpenAppProcessorExecutionException pex) {
+            LyshraOpenAppProcessorExecutionException processorExecutionException) {
 
         super(
                 String.format(
                         ERROR_MESSAGE_TEMPLATE,
                         workflowStepIdentifier,
-                        pex.getProcessorIdentifier(),
-                        pex.getErrorInfo(),
-                        pex.getTemplateVariables(),
-                        Optional.ofNullable(pex.getRootCause()).map(Throwable::getMessage).orElse(null),
-                        Optional.ofNullable(pex.getRootCause()).map(Throwable::getCause).map(Throwable::getMessage).orElse(null),
-                        pex.getAdditionalInfo()
+                        processorExecutionException.getProcessorIdentifier(),
+                        processorExecutionException.getErrorInfo(),
+                        processorExecutionException.getTemplateVariables(),
+                        Optional.ofNullable(processorExecutionException.getRootCause())
+                                .map(Throwable::getMessage)
+                                .orElse(null),
+                        Optional.ofNullable(processorExecutionException.getRootCause())
+                                .map(Throwable::getCause)
+                                .map(Throwable::getMessage)
+                                .orElse(null),
+                        processorExecutionException.getAdditionalInfo()
                 ),
-                pex.getRootCause()
+                processorExecutionException.getRootCause()
         );
 
         this.workflowStepIdentifier = workflowStepIdentifier;
-        this.processorIdentifier = pex.getProcessorIdentifier();
-        this.errorInfo = pex.getErrorInfo();
-        this.templateVariables = pex.getTemplateVariables();
-        this.rootCause = pex.getRootCause();
-        this.additionalInfo = pex.getAdditionalInfo();
+        this.processorIdentifier = processorExecutionException.getProcessorIdentifier();
+        this.errorInfo = processorExecutionException.getErrorInfo();
+        this.templateVariables = processorExecutionException.getTemplateVariables();
+        this.rootCause = processorExecutionException.getRootCause();
+        this.additionalInfo = processorExecutionException.getAdditionalInfo();
     }
 
 }

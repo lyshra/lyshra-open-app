@@ -87,6 +87,11 @@ public class LyshraOpenAppWorkflowStepExecutor implements ILyshraOpenAppWorkflow
 
         return facade.getProcessorExecutor()
                 .execute(workflowStep.getProcessor(), workflowStep.getInputConfig(), context)
+
+                // update the context data with processor output
+                .doOnNext(result -> Optional.ofNullable(result.getData())
+                        .ifPresent(data -> context.setData(result.getData())))
+
                 .map(res -> getNextProcessor(workflowStep, res.getBranch()))
                 .onErrorMap(
                         LyshraOpenAppProcessorExecutionException.class,
@@ -104,7 +109,6 @@ public class LyshraOpenAppWorkflowStepExecutor implements ILyshraOpenAppWorkflow
         return facade.getWorkflowExecutor()
                 .execute(workflowStep.getWorkflowCall(), context)
                 .map(res -> getNextProcessor(workflowStep, LyshraOpenAppConstants.DEFAULT_BRANCH))
-
                 ;
     }
 

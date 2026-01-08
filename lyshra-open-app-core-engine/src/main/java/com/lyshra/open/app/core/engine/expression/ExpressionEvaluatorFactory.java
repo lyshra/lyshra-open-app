@@ -1,7 +1,7 @@
 package com.lyshra.open.app.core.engine.expression;
 
-import com.lyshra.open.app.core.engine.expression.evaluators.GraalVM_JsJsonEvaluator;
-import com.lyshra.open.app.core.engine.expression.evaluators.SpElJsonEvaluator;
+import com.lyshra.open.app.core.engine.expression.evaluators.spel.SpElJsonEvaluator;
+import com.lyshra.open.app.core.engine.expression.evaluators.graalvm.GraalVmJsEvaluator;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppExpressionEvaluator;
 import com.lyshra.open.app.integration.enumerations.LyshraOpenAppExpressionType;
 
@@ -15,8 +15,8 @@ public class ExpressionEvaluatorFactory {
         SpElJsonEvaluator spElJsonEvaluator = new SpElJsonEvaluator();
         evaluators.put(spElJsonEvaluator.getEvaluatorType(), spElJsonEvaluator);
 
-        GraalVM_JsJsonEvaluator graalVMJsJsonEvaluator = new GraalVM_JsJsonEvaluator();
-        evaluators.put(graalVMJsJsonEvaluator.getEvaluatorType(), graalVMJsJsonEvaluator);
+        GraalVmJsEvaluator graalVmJsEvaluator = new GraalVmJsEvaluator();
+        evaluators.put(graalVmJsEvaluator.getEvaluatorType(), graalVmJsEvaluator);
     }
 
     public static ExpressionEvaluatorFactory getInstance() {

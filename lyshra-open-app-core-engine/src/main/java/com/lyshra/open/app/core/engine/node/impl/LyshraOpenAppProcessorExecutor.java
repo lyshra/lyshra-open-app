@@ -8,17 +8,15 @@ import com.lyshra.open.app.core.engine.plugin.ILyshraOpenAppPluginFactory;
 import com.lyshra.open.app.core.exception.codes.LyshraOpenAppInternalErrorCodes;
 import com.lyshra.open.app.core.exception.node.LyshraOpenAppProcessorExecutionException;
 import com.lyshra.open.app.core.models.LyshraOpenAppConstraintViolation;
-import com.lyshra.open.app.integration.constant.LyshraOpenAppConstants;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppContext;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppObjectMapper;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessor;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorFunction;
-import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIO;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIdentifier;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorInputConfig;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorResult;
 import com.lyshra.open.app.integration.exception.LyshraOpenAppProcessorRuntimeException;
-import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorOutputResult;
+import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorOutput;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +45,7 @@ public class LyshraOpenAppProcessorExecutor implements ILyshraOpenAppProcessorEx
     }
 
     @Override
-    public Mono<ILyshraOpenAppProcessorResult<? extends ILyshraOpenAppProcessorIO>> execute(
+    public Mono<ILyshraOpenAppProcessorResult> execute(
             ILyshraOpenAppProcessorIdentifier identifier,
             Map<String, Object> inputConfig,
             ILyshraOpenAppContext context) throws LyshraOpenAppProcessorExecutionException {
@@ -65,7 +63,7 @@ public class LyshraOpenAppProcessorExecutor implements ILyshraOpenAppProcessorEx
                 .flatMap(processorInputConfig -> doExecute(identifier, context, processorInputConfig, processor))
 
                 // to handle scenarios where the processor does not return any output and the engine needs to continue execution
-                .switchIfEmpty(Mono.just(new LyshraOpenAppProcessorOutputResult<>(LyshraOpenAppConstants.DEFAULT_BRANCH)))
+                .switchIfEmpty(Mono.just(LyshraOpenAppProcessorOutput.ofDefaultBranch()))
 
                 .doOnNext(res -> doPostEndActions(identifier, res, context))
                 .doOnError(throwable -> doPostEndActions(identifier, throwable, context));
@@ -157,7 +155,7 @@ public class LyshraOpenAppProcessorExecutor implements ILyshraOpenAppProcessorEx
         return Mono.just(processorInputConfig);
     }
 
-    private Mono<ILyshraOpenAppProcessorResult<? extends ILyshraOpenAppProcessorIO>> doExecute(
+    private Mono<ILyshraOpenAppProcessorResult> doExecute(
             ILyshraOpenAppProcessorIdentifier identifier,
             ILyshraOpenAppContext context,
             ILyshraOpenAppProcessorInputConfig processorInputConfig,
@@ -178,7 +176,7 @@ public class LyshraOpenAppProcessorExecutor implements ILyshraOpenAppProcessorEx
 
     private void doPostEndActions(
             ILyshraOpenAppProcessorIdentifier identifier,
-            ILyshraOpenAppProcessorResult<? extends ILyshraOpenAppProcessorIO> res,
+            ILyshraOpenAppProcessorResult res,
             ILyshraOpenAppContext context) {
 
         context.captureProcessorEnd(identifier, res);
