@@ -1,0 +1,201 @@
+integration:
+    organization: lyshra
+    module: payments
+    version: 1.0.0
+    documentation: docs/README.md
+    
+    # =========================
+    # TRIGGERS
+    # =========================
+    triggers:
+        
+        manual:
+            - name: manualPaymentRun
+              workflow: paymentWorkflow
+              inputMapping:
+                  paymentId: "${manual.paymentId}"
+                  amount: "${manual.amount}"
+        
+        api:
+            - name: initiatePaymentApi
+              path: /payments/initiate
+              method: POST
+              workflow: paymentWorkflow
+              authRequired: true
+              inputMapping:
+                  paymentId: "${request.body.paymentId}"
+                  amount: "${request.body.amount}"
+        
+        webhook:
+            - name: paymentGatewayWebhook
+              path: /webhooks/payment
+              workflow: reconcileWorkflow
+              signatureValidation: true
+              inputMapping:
+                  gatewayTxnId: "${request.body.txnId}"
+                  status: "${request.body.status}"
+        
+        cron:
+            - name: nightlyReconciliation
+              schedule: "0 0 2 * * *"
+              workflow: reconcileWorkflow
+              inputMapping:
+                  runDate: "${now}"
+        
+        event:
+            - name: paymentSuccessEvent
+              topic: payments.success
+              workflow: paymentWorkflow
+              inputMapping:
+                  paymentId: "${event.paymentId}"
+                  amount: "${event.amount}"
+    
+    # =========================
+    # API DEFINITIONS
+    # =========================
+    apis:
+        
+        authProfiles:
+            - name: bearerAuth
+              type: BEARER_TOKEN
+              config:
+                  tokenRef: secret.payment.api.token
+        
+        services:
+            - name: paymentService
+              baseUrl: https://api.payment.com
+              authProfile: bearerAuth
+        
+        endpoints:
+            - name: chargePayment
+              description: Charge a payment
+              serviceName: paymentService
+              method: POST
+              header:
+                  Content-Type: application/json
+              body:
+                  amount: "${input.amount}"
+                  paymentId: "${input.paymentId}"
+              timeoutMs: 3000
+              outputType: PaymentResponse
+              responseHandler:
+                  success:
+                      expressionType: spEL
+                      expression: "#response.status == 'SUCCESS'"
+                  failure:
+                      expressionType: spEL
+                      expression: "#response.status == 'FAILED'"
+              retryPolicy:
+                  maxAttempts: 3
+                  initialIntervalMs: 500
+                  multiplier: 2.0
+                  maxIntervalMs: 3000
+    
+    # =========================
+    # PROCESSORS
+    # =========================
+    processors:
+        
+        - name: validatePayment
+          kind: CORE
+          inputType: PaymentInput
+          outputType: PaymentInput
+        
+        - name: callChargeApi
+          kind: API
+          inputType: PaymentInput
+          outputType: PaymentResponse
+        
+        - name: checkPaymentStatus
+          kind: CORE
+          inputType: PaymentResponse
+          outputType: BooleanResult
+        
+        - name: logFailure
+          kind: CUSTOM
+          inputType: PaymentResponse
+          outputType: NoContent
+        
+        - name: finalizePayment
+          kind: CUSTOM
+          inputType: PaymentResponse
+          outputType: PaymentResult
+    
+    # =========================
+    # WORKFLOWS
+    # =========================
+    workflows:
+        
+        - name: paymentWorkflow
+          startStep: validate
+          inputType: PaymentInput
+          outputType: PaymentResult
+          contextRetention: FULL
+          timeoutMs: 10000
+          
+          steps:
+              
+              - name: validate
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:validatePayment
+                next:
+                    default: callApi
+              
+              - name: callApi
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:callChargeApi
+                onError:
+                    default:
+                        strategy: FALLBACK
+                        fallback:
+                            nextProcessor: lyshra:payments:1.0.0:logFailure
+                next:
+                    default: checkStatus
+              
+              - name: checkStatus
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:checkPaymentStatus
+                next:
+                    true: finalize
+                    false: errorWorkflow
+              
+              - name: errorWorkflow
+                type: WORKFLOW
+                workflowCall: lyshra:payments:1.0.0:errorHandlingWorkflow
+                next:
+                    default: finalize
+              
+              - name: finalize
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:finalizePayment
+        
+        - name: errorHandlingWorkflow
+          startStep: logError
+          inputType: PaymentResponse
+          outputType: NoContent
+          contextRetention: LATEST
+          
+          steps:
+              - name: logError
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:logFailure
+        
+        - name: reconcileWorkflow
+          startStep: reconcileStep
+          inputType: ReconcileInput
+          outputType: NoContent
+          contextRetention: LATEST
+          
+          steps:
+              - name: reconcileStep
+                type: PROCESSOR
+                processor: lyshra:payments:1.0.0:logFailure
+    
+    # =========================
+    # I18N
+    # =========================
+    i18n:
+        locales:
+            - en
+            - hi
+        dirPath: i18n/
