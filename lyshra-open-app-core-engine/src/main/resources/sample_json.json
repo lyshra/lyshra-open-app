@@ -1,0 +1,19 @@
+{
+	"hello": "world",
+	"count": 10,
+	"nested": {
+		"field": "value"
+	},
+	"list": [1, 2, 3],
+	"map": {"key": "value"},
+	"complex": [
+		{"key": "value1"},
+		{"key": "value2"},
+		{
+			"key": [
+				"value3",
+				"value4"
+			]
+		}
+	]
+}

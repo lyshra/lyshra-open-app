@@ -1,7 +1,6 @@
 package com.lyshra.open.app.core.models;
 
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppContext;
-import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIO;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIdentifier;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorResult;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowIdentifier;
@@ -9,47 +8,51 @@ import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowS
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-@Data
 @Slf4j
+@Data
 public class LyshraOpenAppContext implements ILyshraOpenAppContext {
-    // injected by framework
-    private final Map<String, Object> $config;
+    private final Map<String, Object> history;
+    private Object data;
+    private Map<String, Object> variables;
 
-    // captures workflow execution history with their input and output
-    private final Map<String, Object> $history;
-
-    // data to operate on
-    private final Map<String, Object> $data;
-
-    // variables to capture intermediate results
-    private final Map<String, Object> $variables;
-
-    public LyshraOpenAppContext(Map<String, Object> $config) {
-        this.$config = $config;
-        this.$history = new ConcurrentSkipListMap<>();
-        this.$data = new LinkedHashMap<>();
-        this.$variables = new ConcurrentHashMap<>();
+    public LyshraOpenAppContext() {
+        this.history = new ConcurrentSkipListMap<>();
+        this.data = new Object();
+        this.variables = new ConcurrentHashMap<>();
     }
 
-    public Map<String, Object> getConfig() {
-        return $config;
+    @Override
+    public void addVariable(String key, Object value) {
+        variables.put(key, value);
     }
 
-    public Map<String, Object> getHistory() {
-        return $history;
+    @Override
+    public void updateVariable(String key, Object value) {
+        variables.put(key, value);
     }
 
-    public Map<String, Object> getData() {
-        return $data;
+    @Override
+    public void removeVariable(String key) {
+        variables.remove(key);
     }
 
-    public Map<String, Object> getVariables() {
-        return $variables;
+    @Override
+    public Object getVariable(String key) {
+        return variables.get(key);
+    }
+
+    @Override
+    public boolean hasVariable(String key) {
+        return variables.containsKey(key);
+    }
+
+    @Override
+    public void clearVariables() {
+        variables.clear();
     }
 
     @Override
@@ -87,13 +90,13 @@ public class LyshraOpenAppContext implements ILyshraOpenAppContext {
             ILyshraOpenAppProcessorIdentifier identifier,
             Map<String, Object> rawInput) {
 
-        log.info("Starting processor: [{}], Raw Input: [{}]", identifier, rawInput);
+        log.info("Starting processor: [{}], Raw Input: [{}], Data: [{}], Variables: [{}]", identifier, rawInput, data, variables);
     }
 
     @Override
     public void captureProcessorEnd(
             ILyshraOpenAppProcessorIdentifier identifier,
-            ILyshraOpenAppProcessorResult<? extends ILyshraOpenAppProcessorIO> res) {
+            ILyshraOpenAppProcessorResult res) {
 
         log.info("Processor completed: [{}], Result: [{}]", identifier, res);
     }
@@ -104,4 +107,3 @@ public class LyshraOpenAppContext implements ILyshraOpenAppContext {
     }
 
 }
-

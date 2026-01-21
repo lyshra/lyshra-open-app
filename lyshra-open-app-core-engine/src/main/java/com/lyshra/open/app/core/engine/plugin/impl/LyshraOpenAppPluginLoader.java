@@ -4,6 +4,7 @@ import com.lyshra.open.app.core.engine.ILyshraOpenAppFacade;
 import com.lyshra.open.app.core.engine.LyshraOpenAppFacade;
 import com.lyshra.open.app.core.engine.plugin.ILyshraOpenAppPluginLoader;
 import com.lyshra.open.app.core.exception.LyshraOpenAppRuntimeException;
+import com.lyshra.open.app.core.exception.plugin.LyshraOpenAppPluginAlreadyRegistered;
 import com.lyshra.open.app.integration.ILyshraOpenAppPluginProvider;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppPlugin;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppPluginIdentifier;
@@ -14,6 +15,7 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -58,6 +60,20 @@ public final class LyshraOpenAppPluginLoader implements ILyshraOpenAppPluginLoad
             scannedPluginDirectories.add(pluginsRootDirectory.toAbsolutePath().toString());
         } catch (IOException e) {
             throw new LyshraOpenAppRuntimeException("Failed to scan plugins", e);
+        }
+    }
+
+    @Override
+    public void loadPlugin(ILyshraOpenAppPluginProvider pluginProvider) {
+        try {
+            createAndRegisterPlugin(
+                    pluginProvider,
+                    new LyshraOpenAppPluginClassLoader(new URL[] {}, getClass().getClassLoader()),
+                    Paths.get(".")
+            );
+        } catch (LyshraOpenAppPluginAlreadyRegistered e) {
+            // only logging it, since this method is exposed only for testing purposes
+            log.warn("Plugin already registered: [{}]", e.getIdentifier());
         }
     }
 

@@ -3,7 +3,6 @@ package com.lyshra.open.app.integration.models.apis;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppRetryPolicy;
 import com.lyshra.open.app.integration.contract.api.ILyshraOpenAppApiEndpoint;
 import com.lyshra.open.app.integration.contract.api.ILyshraOpenAppApiResponseStatusIdentifier;
-import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIO;
 import com.lyshra.open.app.integration.enumerations.LyshraOpenAppHttpMethod;
 import com.lyshra.open.app.integration.models.commons.LyshraOpenAppRetryPolicy;
 import lombok.Data;
@@ -25,7 +24,7 @@ public class LyshraOpenAppApiEndpoint implements ILyshraOpenAppApiEndpoint, Seri
     private final Map<String, String> queryParams;
     private final Object body;
     private final int timeoutMs;
-    private final Class<? extends ILyshraOpenAppProcessorIO> outputType;
+    private final Class outputType;
     private final ILyshraOpenAppApiResponseStatusIdentifier responseStatusIdentifier;
     private final ILyshraOpenAppRetryPolicy retryPolicy;
 
@@ -43,7 +42,7 @@ public class LyshraOpenAppApiEndpoint implements ILyshraOpenAppApiEndpoint, Seri
     public interface EndpointHeadersBuilder { EndpointBodyBuilder headers(Map<String, String> h); }
     public interface EndpointBodyBuilder { EndpointTimeoutMsBuilder body(Object b); }
     public interface EndpointTimeoutMsBuilder { EndpointOutputTypeBuilder timeoutMs(int t); }
-    public interface EndpointOutputTypeBuilder { EndpointResponseIdentifierBuilder outputType(Class<? extends ILyshraOpenAppProcessorIO> o); }
+    public interface EndpointOutputTypeBuilder { EndpointResponseIdentifierBuilder outputType(Class o); }
     public interface EndpointResponseIdentifierBuilder {
         EndpointRetryPolicyBuilder responseStatusIdentifier(LyshraOpenAppApiResponseStatusIdentifier r);
         EndpointRetryPolicyBuilder responseStatusIdentifier(Function<LyshraOpenAppApiResponseStatusIdentifier.InitialStepBuilder, LyshraOpenAppApiResponseStatusIdentifier.BuildStep> builder);
@@ -80,7 +79,7 @@ public class LyshraOpenAppApiEndpoint implements ILyshraOpenAppApiEndpoint, Seri
         private Map<String, String> headers;
         private Object body;
         private int timeoutMs;
-        private Class<? extends ILyshraOpenAppProcessorIO> outputType;
+        private Class outputType;
         private LyshraOpenAppApiResponseStatusIdentifier responseStatusIdentifier;
         private LyshraOpenAppRetryPolicy retryPolicy;
 
@@ -134,7 +133,7 @@ public class LyshraOpenAppApiEndpoint implements ILyshraOpenAppApiEndpoint, Seri
             return this;
         }
 
-        public EndpointResponseIdentifierBuilder outputType(Class<? extends ILyshraOpenAppProcessorIO> outputType) {
+        public EndpointResponseIdentifierBuilder outputType(Class outputType) {
             this.outputType = outputType;
             return this;
         }

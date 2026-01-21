@@ -42,8 +42,14 @@ public enum LyshraOpenAppInternalErrorCodes implements ILyshraOpenAppErrorInfo {
             LyshraOpenAppHttpStatus.INTERNAL_SERVER_ERROR,
             "processor.execution.failed",
             "processor.execution.failed.resolution"
-    )
+    ),
 
+    EXPRESSION_MEMBER_FUNCTION_INPUT_INVALID(
+            "LYSHRA_ERR_0006",
+            LyshraOpenAppHttpStatus.BAD_REQUEST,
+            "expression.member.function.input.invalid",
+            "expression.member.function.input.invalid.resolution"
+    )
     ;
 
     private final String errorCode;

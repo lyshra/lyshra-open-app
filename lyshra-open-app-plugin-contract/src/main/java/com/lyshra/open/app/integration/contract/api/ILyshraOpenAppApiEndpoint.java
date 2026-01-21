@@ -1,7 +1,6 @@
 package com.lyshra.open.app.integration.contract.api;
 
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppRetryPolicy;
-import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIO;
 import com.lyshra.open.app.integration.enumerations.LyshraOpenAppHttpMethod;
 
 import java.util.Map;
@@ -17,7 +16,7 @@ public interface ILyshraOpenAppApiEndpoint {
     Map<String, String> getQueryParams();
     Object getBody();
     int getTimeoutMs();
-    Class<? extends ILyshraOpenAppProcessorIO> getOutputType();
+    Class getOutputType();
     ILyshraOpenAppApiResponseStatusIdentifier getResponseStatusIdentifier();
     ILyshraOpenAppRetryPolicy getRetryPolicy();
 }
