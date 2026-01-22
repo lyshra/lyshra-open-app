@@ -3,6 +3,8 @@ package com.lyshra.open.app.core.processors.plugin;
 import com.lyshra.open.app.core.processors.plugin.processors.IfProcessor;
 import com.lyshra.open.app.core.processors.plugin.processors.JavaScriptProcessor;
 import com.lyshra.open.app.core.processors.plugin.processors.SwitchProcessor;
+import com.lyshra.open.app.core.processors.plugin.processors.api.ApiProcessor;
+import com.lyshra.open.app.core.processors.plugin.processors.SwitchProcessor;
 import com.lyshra.open.app.core.processors.plugin.processors.date.DateAddProcessor;
 import com.lyshra.open.app.core.processors.plugin.processors.date.DateCompareProcessor;
 import com.lyshra.open.app.core.processors.plugin.processors.list.ListCustomComparatorSortProcessor;
@@ -34,7 +36,10 @@ public class LyshraOpenAppCoreProcessorsPlugin implements ILyshraOpenAppPluginPr
                         .processor(SwitchProcessor::build)
                         .processor(JavaScriptProcessor::build)
 
-                         // List operations
+                        // API operations
+                        .processor(ApiProcessor::build)
+
+                        // List operations
                         .processor(ListFilterProcessor::build)
                         .processor(ListRemoveDuplicatesProcessor::build)
                         .processor(ListSortProcessor::build)
@@ -52,6 +57,13 @@ public class LyshraOpenAppCoreProcessorsPlugin implements ILyshraOpenAppPluginPr
                         // stop & error
                         // sleep, delay
                         // noop
+                        // date manipulation
+                            // add, minus
+                            // if before, is after, is same, is today, is between
+                            // is today, is weekend, is weekday, isDayInWeek(list of days mon, tue)
+                            // is first day of month, is last day of month, is nth day of month
+                            // format a date
+                            // extract part of a date
 
                         // html templates
 

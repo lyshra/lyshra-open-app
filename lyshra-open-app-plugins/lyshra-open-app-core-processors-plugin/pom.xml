@@ -23,6 +23,12 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
+        <!-- WebFlux for HTTP client -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>com.lyshra</groupId>

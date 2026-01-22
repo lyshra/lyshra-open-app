@@ -12,6 +12,8 @@ import com.lyshra.open.app.integration.models.LyshraOpenAppPluginIdentifier;
 import com.lyshra.open.app.integration.models.apis.LyshraOpenAppApiAuthProfile;
 import com.lyshra.open.app.integration.models.apis.LyshraOpenAppApiDefinitions;
 import com.lyshra.open.app.integration.models.apis.LyshraOpenAppApiService;
+import com.lyshra.open.app.integration.models.apis.auth.BasicAuthConfig;
+import com.lyshra.open.app.integration.models.apis.auth.BearerTokenAuthConfig;
 import com.lyshra.open.app.integration.models.commons.LyshraOpenAppExpression;
 import com.lyshra.open.app.integration.models.processors.LyshraOpenAppProcessorIdentifier;
 import com.lyshra.open.app.integration.models.workflows.step.LyshraOpenAppWorkflowStep;
@@ -266,20 +268,28 @@ public class SamplePlugin implements ILyshraOpenAppPluginProvider {
                 .authProfiles(authProfilesBuilder -> authProfilesBuilder
                         .authProfile(authProfileBuilder -> authProfileBuilder
                                 .name("authProfile1")
-                                .type(LyshraOpenAppApiAuthType.NO_AUTH)
+                                .noAuth()
                         )
                         .authProfile(authProfileBuilder -> authProfileBuilder
                                 .name("authProfile2")
-                                .type(LyshraOpenAppApiAuthType.BASIC_AUTH)
+                                .basicAuth(BasicAuthConfig.builder()
+                                        .username("user")
+                                        .password("pass")
+                                        .build())
                         )
                         .authProfile(authProfileBuilder -> authProfileBuilder
                                 .name("authProfile3")
-                                .type(LyshraOpenAppApiAuthType.BASIC_AUTH)
+                                .basicAuth(BasicAuthConfig.builder()
+                                        .username("user2")
+                                        .password("pass2")
+                                        .build())
                         )
-                        .authProfile(LyshraOpenAppApiAuthProfile.builder().name("").type(null).build())
+                        .authProfile(LyshraOpenAppApiAuthProfile.builder().name("authProfile4").noAuth().build())
                         .authProfile(authProfileBuilder -> authProfileBuilder
-                                .name("authProfile3")
-                                .type(LyshraOpenAppApiAuthType.BASIC_AUTH)
+                                .name("authProfile5")
+                                .bearerToken(BearerTokenAuthConfig.builder()
+                                        .token("my-bearer-token")
+                                        .build())
                         )
                 )
                 .services(servicesBuilder -> servicesBuilder

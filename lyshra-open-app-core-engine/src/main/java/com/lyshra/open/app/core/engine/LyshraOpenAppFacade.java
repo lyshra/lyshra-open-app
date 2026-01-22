@@ -22,6 +22,8 @@ import com.lyshra.open.app.core.engine.plugin.impl.LyshraOpenAppPluginLoader;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppExpressionEvaluator;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppObjectMapper;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppSystemConfigEngine;
+import com.lyshra.open.app.integration.contract.api.ILyshraOpenAppApis;
+import com.lyshra.open.app.integration.models.LyshraOpenAppPluginIdentifier;
 
 public class LyshraOpenAppFacade implements ILyshraOpenAppFacade {
 
@@ -92,5 +94,28 @@ public class LyshraOpenAppFacade implements ILyshraOpenAppFacade {
 
     public ILyshraOpenAppPluginDocumentationService getPluginDocumentationService() {
         return LyshraOpenAppPluginDocumentationService.getInstance();
+    }
+
+    @Override
+    public ILyshraOpenAppApis getPluginApis(String pluginIdentifier) {
+        if (pluginIdentifier == null || pluginIdentifier.isBlank()) {
+            return null;
+        }
+
+        try {
+            // Parse the plugin identifier (format: "organization/module/version")
+            String[] parts = pluginIdentifier.split("/");
+            if (parts.length != 3) {
+                return null;
+            }
+
+            LyshraOpenAppPluginIdentifier identifier = new LyshraOpenAppPluginIdentifier(
+                    parts[0], parts[1], parts[2]
+            );
+
+            return LyshraOpenAppPluginFactory.getInstance().getApis(identifier);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
