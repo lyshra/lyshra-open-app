@@ -23,6 +23,7 @@
     <modules>
         <module>lyshra-open-app-core-processors-plugin</module>
         <module>lyshra-open-app-sample-workflow-plugin</module>
+        <module>lyshra-open-app-mongodb-plugin</module>
     </modules>
 
 </project>
