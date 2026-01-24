@@ -25,6 +25,7 @@
         <module>lyshra-open-app-plugin-contract-model</module>
         <module>lyshra-open-app-plugins</module>
         <module>lyshra-open-app-core-engine</module>
+        <module>lyshra-open-app-distributed</module>
     </modules>
 
 </project>
