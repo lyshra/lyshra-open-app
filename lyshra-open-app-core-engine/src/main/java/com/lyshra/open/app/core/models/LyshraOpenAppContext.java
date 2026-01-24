@@ -3,26 +3,51 @@ package com.lyshra.open.app.core.models;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppContext;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorIdentifier;
 import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessorResult;
+import com.lyshra.open.app.integration.contract.version.IWorkflowInstanceMetadata;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowIdentifier;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowStepIdentifier;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Implementation of workflow execution context with version tracking.
+ *
+ * <p>This context carries:</p>
+ * <ul>
+ *   <li>Data - the main payload being processed</li>
+ *   <li>Variables - workflow-scoped variables</li>
+ *   <li>Instance Metadata - version and execution tracking</li>
+ *   <li>History - execution audit trail</li>
+ * </ul>
+ */
 @Slf4j
 @Data
 public class LyshraOpenAppContext implements ILyshraOpenAppContext {
     private final Map<String, Object> history;
     private Object data;
     private Map<String, Object> variables;
+    private IWorkflowInstanceMetadata instanceMetadata;
 
     public LyshraOpenAppContext() {
         this.history = new ConcurrentSkipListMap<>();
         this.data = new Object();
         this.variables = new ConcurrentHashMap<>();
+        this.instanceMetadata = null;
+    }
+
+    /**
+     * Creates a context with instance metadata for version tracking.
+     *
+     * @param instanceMetadata metadata with version info
+     */
+    public LyshraOpenAppContext(IWorkflowInstanceMetadata instanceMetadata) {
+        this();
+        this.instanceMetadata = instanceMetadata;
     }
 
     @Override
@@ -57,7 +82,9 @@ public class LyshraOpenAppContext implements ILyshraOpenAppContext {
 
     @Override
     public void captureWorkflowStart(ILyshraOpenAppWorkflowIdentifier identifier) {
-        log.info("Starting workflow: [{}]", identifier);
+        String versionInfo = getWorkflowVersionString().map(v -> ", version=" + v).orElse("");
+        String instanceInfo = getInstanceId().map(id -> ", instanceId=" + id).orElse("");
+        log.info("Starting workflow: [{}]{}{}", identifier, versionInfo, instanceInfo);
     }
 
     @Override
@@ -106,4 +133,32 @@ public class LyshraOpenAppContext implements ILyshraOpenAppContext {
         log.error("Processor Failed, Error: [{}]", throwable.getMessage());
     }
 
+    @Override
+    public Optional<IWorkflowInstanceMetadata> getInstanceMetadata() {
+        return Optional.ofNullable(instanceMetadata);
+    }
+
+    @Override
+    public void setInstanceMetadata(IWorkflowInstanceMetadata metadata) {
+        this.instanceMetadata = metadata;
+        if (metadata != null) {
+            log.debug("Set instance metadata: instanceId={}, workflowId={}, version={}",
+                    metadata.getInstanceId(),
+                    metadata.getWorkflowId(),
+                    metadata.getCurrentVersionString());
+        }
+    }
+
+    /**
+     * Creates a copy of this context for nested workflow execution.
+     *
+     * @param nestedMetadata metadata for the nested workflow
+     * @return new context with nested metadata
+     */
+    public LyshraOpenAppContext createNestedContext(IWorkflowInstanceMetadata nestedMetadata) {
+        LyshraOpenAppContext nested = new LyshraOpenAppContext(nestedMetadata);
+        nested.setData(this.data);
+        nested.setVariables(new ConcurrentHashMap<>(this.variables));
+        return nested;
+    }
 }
