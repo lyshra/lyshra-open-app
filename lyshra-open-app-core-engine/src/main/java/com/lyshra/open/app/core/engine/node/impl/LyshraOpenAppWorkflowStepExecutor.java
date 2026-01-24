@@ -8,10 +8,13 @@ import com.lyshra.open.app.core.exception.node.LyshraOpenAppProcessorExecutionEx
 import com.lyshra.open.app.core.exception.node.LyshraOpenAppWorkflowStepExecutionException;
 import com.lyshra.open.app.integration.constant.LyshraOpenAppConstants;
 import com.lyshra.open.app.integration.contract.ILyshraOpenAppContext;
+import com.lyshra.open.app.integration.contract.humantask.ILyshraOpenAppHumanTaskProcessor;
+import com.lyshra.open.app.integration.contract.processor.ILyshraOpenAppProcessor;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowStep;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowStepIdentifier;
 import com.lyshra.open.app.integration.contract.workflow.ILyshraOpenAppWorkflowStepNext;
 import com.lyshra.open.app.integration.enumerations.LyshraOpenAppWorkflowStepType;
+import com.lyshra.open.app.integration.models.humantask.LyshraOpenAppHumanTaskProcessorOutput;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -85,6 +88,13 @@ public class LyshraOpenAppWorkflowStepExecutor implements ILyshraOpenAppWorkflow
             ILyshraOpenAppContext context,
             ILyshraOpenAppWorkflowStep workflowStep) {
 
+        // Check if this is a human task processor
+        ILyshraOpenAppProcessor processor = facade.getPluginFactory().getProcessor(workflowStep.getProcessor());
+        if (processor instanceof ILyshraOpenAppHumanTaskProcessor humanTaskProcessor) {
+            return doExecuteHumanTaskProcessor(identifier, context, workflowStep, humanTaskProcessor);
+        }
+
+        // Regular processor execution
         return facade.getProcessorExecutor()
                 .execute(workflowStep.getProcessor(), workflowStep.getInputConfig(), context)
 
@@ -99,6 +109,83 @@ public class LyshraOpenAppWorkflowStepExecutor implements ILyshraOpenAppWorkflow
                 .doOnError(
                         LyshraOpenAppWorkflowStepExecutionException.class,
                         throwable -> log.error("Error executing workflow step, Error: [{}]", throwable.getMessage()));
+    }
+
+    /**
+     * Executes a human task processor, which suspends workflow execution
+     * and creates a human task record.
+     */
+    private Mono<String> doExecuteHumanTaskProcessor(
+            ILyshraOpenAppWorkflowStepIdentifier identifier,
+            ILyshraOpenAppContext context,
+            ILyshraOpenAppWorkflowStep workflowStep,
+            ILyshraOpenAppHumanTaskProcessor humanTaskProcessor) {
+
+        log.info("Executing human task processor: step={}, type={}",
+                identifier.getWorkflowStepName(), humanTaskProcessor.getHumanTaskType());
+
+        // Extract workflow instance ID from context or generate if not present
+        String workflowInstanceId = extractWorkflowInstanceId(context, identifier);
+
+        return facade.getHumanTaskProcessorExecutor()
+                .execute(
+                        humanTaskProcessor,
+                        facade.getObjectMapper().convertValue(
+                                workflowStep.getInputConfig(),
+                                humanTaskProcessor.getInputConfigType()),
+                        workflowInstanceId,
+                        identifier.getWorkflowStepName(),
+                        context
+                )
+                .doOnNext(output -> {
+                    // Store task information in context for potential use by resumption
+                    if (output.isSuspended()) {
+                        context.addVariable("$humanTaskId", output.getTaskId());
+                        context.addVariable("$humanTaskWorkflowInstanceId", output.getWorkflowInstanceId());
+                        context.addVariable("$humanTaskStepId", output.getWorkflowStepId());
+                    }
+                    // Update context data if output contains data
+                    Optional.ofNullable(output.getData())
+                            .ifPresent(context::setData);
+                })
+                .map(output -> {
+                    // If workflow is suspended, return the WAITING branch
+                    // The workflow executor should handle this specially
+                    if (output.isSuspended()) {
+                        log.info("Workflow suspended for human task: taskId={}, workflowId={}, stepId={}",
+                                output.getTaskId(), workflowInstanceId, identifier.getWorkflowStepName());
+                        return LyshraOpenAppConstants.WAITING_BRANCH;
+                    }
+                    // Otherwise, return the outcome branch for routing
+                    return getNextProcessor(workflowStep, output.getBranch());
+                })
+                .onErrorMap(
+                        ex -> !(ex instanceof LyshraOpenAppWorkflowStepExecutionException),
+                        ex -> new LyshraOpenAppWorkflowStepExecutionException(identifier, ex))
+                .doOnError(throwable -> log.error(
+                        "Error executing human task processor: step={}, error={}",
+                        identifier.getWorkflowStepName(), throwable.getMessage()));
+    }
+
+    /**
+     * Extracts or generates a workflow instance ID from the context.
+     */
+    private String extractWorkflowInstanceId(ILyshraOpenAppContext context, ILyshraOpenAppWorkflowStepIdentifier identifier) {
+        // Check if workflow instance ID is already in context variables
+        Object instanceId = context.getVariables().get("$workflowInstanceId");
+        if (instanceId != null) {
+            return instanceId.toString();
+        }
+
+        // Generate a new instance ID based on workflow identifier and timestamp
+        String generatedId = String.format("%s-%s-%d",
+                identifier.getWorkflowName(),
+                identifier.getWorkflowStepName(),
+                System.currentTimeMillis());
+
+        // Store in context for future reference
+        context.addVariable("$workflowInstanceId", generatedId);
+        return generatedId;
     }
 
     private Mono<String> doExecuteWorkflowStep_Workflow(

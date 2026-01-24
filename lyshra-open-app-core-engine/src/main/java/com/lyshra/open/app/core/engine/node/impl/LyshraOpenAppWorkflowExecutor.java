@@ -66,6 +66,16 @@ public class LyshraOpenAppWorkflowExecutor implements ILyshraOpenAppWorkflowExec
             return Mono.just(context);
         }
 
+        // Check for workflow suspension (human task waiting)
+        if (LyshraOpenAppConstants.WAITING_BRANCH.equalsIgnoreCase(currentStep.trim())) {
+            log.info("Workflow suspended at human task step. Workflow will resume when human task is completed.");
+            // Mark in context that workflow is suspended
+            context.addVariable("$workflowStatus", "WAITING");
+            context.addVariable("$suspendedAt", java.time.Instant.now().toString());
+            // Return context without continuing - workflow is now suspended
+            return Mono.just(context);
+        }
+
         LyshraOpenAppWorkflowStepIdentifier workflowStepIdentifier = new LyshraOpenAppWorkflowStepIdentifier(workflowIdentifier, currentStep);
         return facade.getWorkflowStepExecutor().execute(workflowStepIdentifier, context)
                 .flatMap(nextStep -> executeStep(nextStep, workflowStepIdentifier, context));

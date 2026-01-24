@@ -6,6 +6,12 @@ import com.lyshra.open.app.core.engine.database.impl.LyshraOpenAppDatasourceEngi
 import com.lyshra.open.app.core.engine.documentation.ILyshraOpenAppPluginDocumentationService;
 import com.lyshra.open.app.core.engine.documentation.impl.LyshraOpenAppPluginDocumentationService;
 import com.lyshra.open.app.core.engine.expression.LyshraOpenAppExpressionEvaluator;
+import com.lyshra.open.app.core.engine.humantask.ILyshraOpenAppHumanTaskProcessorExecutor;
+import com.lyshra.open.app.core.engine.humantask.ILyshraOpenAppHumanTaskService;
+import com.lyshra.open.app.core.engine.humantask.impl.LyshraOpenAppHumanTaskProcessorExecutorImpl;
+import com.lyshra.open.app.core.engine.humantask.impl.LyshraOpenAppHumanTaskServiceImpl;
+import com.lyshra.open.app.core.engine.state.ILyshraOpenAppWorkflowStateStore;
+import com.lyshra.open.app.core.engine.state.LyshraOpenAppWorkflowStateStoreManager;
 import com.lyshra.open.app.core.engine.message.ILyshraOpenAppPluginMessageSource;
 import com.lyshra.open.app.core.engine.message.LyshraOpenAppPluginMessageSource;
 import com.lyshra.open.app.core.engine.misc.LyshraOpenAppObjectMapper;
@@ -117,5 +123,25 @@ public class LyshraOpenAppFacade implements ILyshraOpenAppFacade {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public ILyshraOpenAppHumanTaskProcessorExecutor getHumanTaskProcessorExecutor() {
+        return LyshraOpenAppHumanTaskProcessorExecutorImpl.getInstance();
+    }
+
+    @Override
+    public ILyshraOpenAppHumanTaskService getHumanTaskService() {
+        return LyshraOpenAppHumanTaskServiceImpl.getInstance();
+    }
+
+    @Override
+    public LyshraOpenAppWorkflowStateStoreManager getWorkflowStateStoreManager() {
+        return LyshraOpenAppWorkflowStateStoreManager.getInstance();
+    }
+
+    @Override
+    public ILyshraOpenAppWorkflowStateStore getWorkflowStateStore() {
+        return LyshraOpenAppWorkflowStateStoreManager.getInstance().getStore();
     }
 }
