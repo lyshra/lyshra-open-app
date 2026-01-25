@@ -226,8 +226,27 @@
         </div>
     </div>
 
+    <!-- Validation Panel -->
+    <div id="validationPanel" class="validation-panel">
+        <div class="validation-panel-header">
+            <h6><i class="bi bi-exclamation-triangle"></i> <span id="validationTitle">Validation Issues</span></h6>
+            <div class="d-flex align-items-center gap-3">
+                <div class="validation-summary">
+                    <span class="error-count"><i class="bi bi-x-circle"></i> <span id="errorCount">0</span> errors</span>
+                    <span class="warning-count"><i class="bi bi-exclamation-triangle"></i> <span id="warningCount">0</span> warnings</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="designer.hideValidationPanel()">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="validation-panel-body" id="validationList"></div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
     <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+    <script th:src="@{/static/js/form-builder.js}"></script>
+    <script th:src="@{/static/js/workflow-validator.js}"></script>
     <script th:src="@{/static/js/designer.js}"></script>
 </body>
 </html>

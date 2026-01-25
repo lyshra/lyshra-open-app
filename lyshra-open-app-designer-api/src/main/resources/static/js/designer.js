@@ -1458,7 +1458,7 @@ class WorkflowDesigner {
     }
 
     // ============================================
-    // Step Configuration Modal
+    // Step Configuration Modal with FormBuilder
     // ============================================
 
     editStep(stepId) {
@@ -1468,105 +1468,367 @@ class WorkflowDesigner {
         const modal = document.getElementById('stepModal');
         const body = document.getElementById('stepModalBody');
 
-        let html = `
-            <form id="stepConfigForm">
-                <div class="mb-3">
-                    <label class="form-label">Step Name</label>
-                    <input type="text" class="form-control" id="stepName" value="${escapeHtml(step.name)}">
-                </div>
-        `;
-
+        // Find the processor definition
         const processor = this.processors.find(p =>
             p.processorName === step.processor?.processorName
         );
 
-        if (processor && processor.inputFields) {
-            processor.inputFields.forEach(field => {
-                const value = step.inputConfig?.[field.name] || field.defaultValue || '';
-                html += this.renderInputField(field, value);
-            });
-        }
+        // Create processor config with fields
+        const processorConfig = {
+            identifier: processor?.identifier || step.processor?.processorName,
+            displayName: processor?.displayName || step.name,
+            inputFields: processor?.inputFields || this.getDefaultProcessorFields(step.processor?.processorName)
+        };
 
-        html += '</form>';
-        body.innerHTML = html;
+        // Build the form container
+        body.innerHTML = `
+            <div class="mb-3">
+                <label class="form-label">Step Name *</label>
+                <input type="text" class="form-control" id="stepName" value="${escapeHtml(step.name)}" required>
+                <div class="invalid-feedback">Step name is required</div>
+            </div>
+            <hr>
+            <h6 class="text-muted mb-3">
+                <i class="bi bi-gear"></i> Processor Configuration
+            </h6>
+            <div id="processorConfigForm"></div>
+        `;
 
+        // Initialize FormBuilder for processor fields
+        const formContainer = document.getElementById('processorConfigForm');
+        this.currentFormBuilder = new FormBuilder({
+            onChange: (fieldName, value) => {
+                this.onStepFieldChange(stepId, fieldName, value);
+            },
+            onValidate: (fieldName, isValid, message) => {
+                this.onStepFieldValidate(stepId, fieldName, isValid, message);
+            }
+        });
+
+        this.currentFormBuilder.build(formContainer, processorConfig, step.inputConfig || {});
         this.currentEditingStep = stepId;
+
+        // Add step name validation
+        const stepNameInput = document.getElementById('stepName');
+        stepNameInput.addEventListener('input', () => {
+            stepNameInput.classList.remove('is-invalid');
+        });
+
         new bootstrap.Modal(modal).show();
     }
 
-    renderInputField(field, value) {
-        let inputHtml = '';
-        const required = field.required ? 'required' : '';
+    getDefaultProcessorFields(processorName) {
+        // Default field definitions for common processors
+        const defaults = {
+            'SetVariableProcessor': [
+                { name: 'variableName', displayName: 'Variable Name', type: 'STRING', required: true, description: 'Name of the variable to set' },
+                { name: 'value', displayName: 'Value', type: 'EXPRESSION', required: true, description: 'Value or expression to assign' }
+            ],
+            'IfConditionProcessor': [
+                { name: 'condition', displayName: 'Condition', type: 'EXPRESSION', required: true, description: 'Boolean expression to evaluate' }
+            ],
+            'SwitchProcessor': [
+                { name: 'expression', displayName: 'Switch Expression', type: 'EXPRESSION', required: true, description: 'Expression to evaluate for cases' },
+                { name: 'cases', displayName: 'Cases', type: 'JSON', required: true, description: 'JSON object mapping values to step IDs' }
+            ],
+            'ForEachProcessor': [
+                { name: 'collection', displayName: 'Collection', type: 'EXPRESSION', required: true, description: 'Collection to iterate over' },
+                { name: 'itemVariable', displayName: 'Item Variable', type: 'STRING', required: true, description: 'Variable name for current item' },
+                { name: 'indexVariable', displayName: 'Index Variable', type: 'STRING', required: false, description: 'Variable name for current index' }
+            ],
+            'HttpRequestProcessor': [
+                { name: 'url', displayName: 'URL', type: 'URL', required: true, description: 'Request URL' },
+                { name: 'method', displayName: 'HTTP Method', type: 'SELECT', required: true, options: [
+                    { value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' },
+                    { value: 'PUT', label: 'PUT' }, { value: 'DELETE', label: 'DELETE' },
+                    { value: 'PATCH', label: 'PATCH' }
+                ]},
+                { name: 'headers', displayName: 'Headers', type: 'KEY_VALUE_PAIRS', required: false, description: 'Request headers' },
+                { name: 'body', displayName: 'Request Body', type: 'JSON', required: false, description: 'Request body (for POST/PUT/PATCH)' },
+                { name: 'timeout', displayName: 'Timeout (ms)', type: 'NUMBER', required: false, defaultValue: 30000 }
+            ],
+            'JavaScriptProcessor': [
+                { name: 'script', displayName: 'JavaScript Code', type: 'CODE', required: true, language: 'javascript', description: 'JavaScript code to execute' }
+            ],
+            'SQLProcessor': [
+                { name: 'dataSource', displayName: 'Data Source', type: 'STRING', required: true, description: 'Database connection name' },
+                { name: 'query', displayName: 'SQL Query', type: 'CODE', required: true, language: 'sql', description: 'SQL query to execute' },
+                { name: 'parameters', displayName: 'Parameters', type: 'JSON', required: false, description: 'Query parameters' }
+            ],
+            'MongoDBProcessor': [
+                { name: 'connectionName', displayName: 'Connection Name', type: 'STRING', required: true },
+                { name: 'database', displayName: 'Database', type: 'STRING', required: true },
+                { name: 'collection', displayName: 'Collection', type: 'STRING', required: true },
+                { name: 'operation', displayName: 'Operation', type: 'SELECT', required: true, options: [
+                    { value: 'find', label: 'Find' }, { value: 'findOne', label: 'Find One' },
+                    { value: 'insertOne', label: 'Insert One' }, { value: 'insertMany', label: 'Insert Many' },
+                    { value: 'updateOne', label: 'Update One' }, { value: 'updateMany', label: 'Update Many' },
+                    { value: 'deleteOne', label: 'Delete One' }, { value: 'deleteMany', label: 'Delete Many' },
+                    { value: 'aggregate', label: 'Aggregate' }
+                ]},
+                { name: 'query', displayName: 'Query/Filter', type: 'JSON', required: false },
+                { name: 'document', displayName: 'Document', type: 'JSON', required: false }
+            ],
+            'EmailProcessor': [
+                { name: 'to', displayName: 'To', type: 'STRING', required: true, description: 'Recipient email addresses (comma-separated)' },
+                { name: 'subject', displayName: 'Subject', type: 'STRING', required: true },
+                { name: 'body', displayName: 'Body', type: 'CODE', required: true, language: 'html', description: 'Email body (HTML supported)' },
+                { name: 'cc', displayName: 'CC', type: 'STRING', required: false },
+                { name: 'bcc', displayName: 'BCC', type: 'STRING', required: false }
+            ],
+            'LogProcessor': [
+                { name: 'level', displayName: 'Log Level', type: 'SELECT', required: true, options: [
+                    { value: 'DEBUG', label: 'Debug' }, { value: 'INFO', label: 'Info' },
+                    { value: 'WARN', label: 'Warning' }, { value: 'ERROR', label: 'Error' }
+                ]},
+                { name: 'message', displayName: 'Message', type: 'EXPRESSION', required: true, description: 'Log message (supports expressions)' }
+            ],
+            'DelayProcessor': [
+                { name: 'duration', displayName: 'Duration', type: 'DURATION', required: true, description: 'Delay duration' }
+            ],
+            'TransformProcessor': [
+                { name: 'transformations', displayName: 'Transformations', type: 'JSON', required: true, description: 'JSON transformation rules' }
+            ]
+        };
 
-        switch (field.type) {
-            case 'STRING':
-                inputHtml = `<input type="text" class="form-control" name="${field.name}"
-                             value="${escapeHtml(value)}" ${required}>`;
-                break;
-            case 'NUMBER':
-                inputHtml = `<input type="number" class="form-control" name="${field.name}"
-                             value="${value}" ${required}>`;
-                break;
-            case 'BOOLEAN':
-                inputHtml = `<div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="${field.name}"
-                           ${value === true || value === 'true' ? 'checked' : ''}>
-                </div>`;
-                break;
-            case 'SELECT':
-                inputHtml = `<select class="form-select" name="${field.name}" ${required}>`;
-                (field.options || []).forEach(opt => {
-                    inputHtml += `<option value="${opt.value}" ${value === opt.value ? 'selected' : ''}>
-                                  ${opt.label}</option>`;
-                });
-                inputHtml += '</select>';
-                break;
-            case 'CODE':
-            case 'TEXTAREA':
-                inputHtml = `<textarea class="form-control ${field.type === 'CODE' ? 'code-editor' : ''}"
-                             name="${field.name}" rows="5" ${required}>${escapeHtml(value)}</textarea>`;
-                break;
-            case 'JSON':
-                inputHtml = `<textarea class="form-control code-editor" name="${field.name}"
-                             rows="8" ${required}>${typeof value === 'object' ? JSON.stringify(value, null, 2) : escapeHtml(value)}</textarea>`;
-                break;
-            default:
-                inputHtml = `<input type="text" class="form-control" name="${field.name}"
-                             value="${escapeHtml(value)}" ${required}>`;
+        return defaults[processorName] || [];
+    }
+
+    onStepFieldChange(stepId, fieldName, value) {
+        // Real-time update of step configuration
+        const step = this.steps.get(stepId);
+        if (step) {
+            if (!step.inputConfig) step.inputConfig = {};
+            step.inputConfig[fieldName] = value;
         }
+    }
 
-        return `
-            <div class="mb-3">
-                <label class="form-label">${field.displayName}${field.required ? ' *' : ''}</label>
-                ${field.description ? `<small class="text-muted d-block mb-1">${field.description}</small>` : ''}
-                ${inputHtml}
-            </div>
-        `;
+    onStepFieldValidate(stepId, fieldName, isValid, message) {
+        // Update step validation state
+        if (!this.stepValidationState) this.stepValidationState = new Map();
+
+        let stepState = this.stepValidationState.get(stepId) || {};
+        stepState[fieldName] = { isValid, message };
+        this.stepValidationState.set(stepId, stepState);
+
+        // Update step visual indicator
+        this.updateStepValidationIndicator(stepId);
+    }
+
+    updateStepValidationIndicator(stepId) {
+        const stepState = this.stepValidationState?.get(stepId);
+        const stepEl = this.stepsLayer.querySelector(`[data-step-id="${stepId}"]`);
+
+        if (!stepEl) return;
+
+        const hasErrors = stepState && Object.values(stepState).some(v => !v.isValid);
+        const rect = stepEl.querySelector('rect');
+
+        if (hasErrors) {
+            rect.classList.add('step-has-errors');
+        } else {
+            rect.classList.remove('step-has-errors');
+        }
     }
 
     saveStepProperties() {
         const step = this.steps.get(this.currentEditingStep);
         if (!step) return;
 
-        const form = document.getElementById('stepConfigForm');
-        const formData = new FormData(form);
+        // Validate step name
+        const stepNameInput = document.getElementById('stepName');
+        const stepName = stepNameInput.value.trim();
 
-        step.name = formData.get('stepName') || step.name;
-
-        const inputConfig = {};
-        for (const [key, value] of formData.entries()) {
-            if (key !== 'stepName') {
-                inputConfig[key] = value;
-            }
+        if (!stepName) {
+            stepNameInput.classList.add('is-invalid');
+            stepNameInput.focus();
+            return;
         }
-        step.inputConfig = inputConfig;
 
+        // Validate form fields using FormBuilder
+        if (this.currentFormBuilder) {
+            const validation = this.currentFormBuilder.validateAll(true);
+            if (!validation.valid) {
+                return; // FormBuilder shows errors
+            }
+            step.inputConfig = this.currentFormBuilder.getValues();
+        }
+
+        // Update step name
+        step.name = stepName;
+
+        // Update step display
         const g = this.stepsLayer.querySelector(`[data-step-id="${this.currentEditingStep}"]`);
         if (g) {
             g.querySelector('.step-name').textContent = step.name;
         }
 
+        // Save to history
+        this.saveToHistory('updateStep', { stepId: this.currentEditingStep, step: { ...step } });
+
+        // Run workflow validation in background
+        this.runValidation();
+
+        // Close modal
         bootstrap.Modal.getInstance(document.getElementById('stepModal')).hide();
+        this.currentFormBuilder = null;
+    }
+
+    // ============================================
+    // Workflow Validation Integration
+    // ============================================
+
+    runValidation() {
+        if (!this.workflowValidator) {
+            this.workflowValidator = new WorkflowValidator();
+        }
+
+        // Build workflow object for validation
+        const workflow = this.buildWorkflowForValidation();
+        const result = this.workflowValidator.validateWorkflow(workflow);
+
+        // Update validation UI
+        this.updateValidationUI(result);
+        this.updateStepValidationIndicators(result);
+
+        return result;
+    }
+
+    buildWorkflowForValidation() {
+        const steps = [];
+        this.steps.forEach((step, id) => {
+            steps.push({
+                id,
+                name: step.name,
+                processorName: step.processor?.processorName,
+                inputConfig: step.inputConfig || {},
+                position: step.position
+            });
+        });
+
+        const connections = [];
+        this.connections.forEach((conn, id) => {
+            connections.push({
+                id,
+                sourceStepId: conn.from,
+                targetStepId: conn.to,
+                connectionType: conn.type || 'DEFAULT',
+                sourcePort: conn.sourcePort,
+                targetPort: conn.targetPort
+            });
+        });
+
+        return {
+            name: this.workflow?.name || 'Untitled',
+            startStepId: this.workflow?.startStepId,
+            steps,
+            connections
+        };
+    }
+
+    updateValidationUI(result) {
+        const panel = document.getElementById('validationPanel');
+        const errorCount = document.getElementById('errorCount');
+        const warningCount = document.getElementById('warningCount');
+        const validationList = document.getElementById('validationList');
+
+        if (!panel) return;
+
+        const errors = result.errors || [];
+        const warnings = result.warnings || [];
+
+        errorCount.textContent = errors.length;
+        warningCount.textContent = warnings.length;
+
+        if (errors.length === 0 && warnings.length === 0) {
+            panel.classList.remove('show');
+            return;
+        }
+
+        let html = '';
+
+        errors.forEach(err => {
+            html += `
+                <div class="validation-item validation-error" data-step-id="${err.stepId || ''}">
+                    <i class="bi bi-x-circle"></i>
+                    <div class="validation-item-content">
+                        <strong>${err.code}</strong>: ${err.message}
+                        ${err.stepName ? `<small class="d-block text-muted">Step: ${err.stepName}</small>` : ''}
+                    </div>
+                    ${err.stepId ? `<button class="btn btn-sm btn-link" onclick="designer.focusOnStep('${err.stepId}')">
+                        <i class="bi bi-eye"></i>
+                    </button>` : ''}
+                </div>
+            `;
+        });
+
+        warnings.forEach(warn => {
+            html += `
+                <div class="validation-item validation-warning" data-step-id="${warn.stepId || ''}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div class="validation-item-content">
+                        <strong>${warn.code}</strong>: ${warn.message}
+                        ${warn.stepName ? `<small class="d-block text-muted">Step: ${warn.stepName}</small>` : ''}
+                    </div>
+                    ${warn.stepId ? `<button class="btn btn-sm btn-link" onclick="designer.focusOnStep('${warn.stepId}')">
+                        <i class="bi bi-eye"></i>
+                    </button>` : ''}
+                </div>
+            `;
+        });
+
+        validationList.innerHTML = html;
+        panel.classList.add('show');
+    }
+
+    updateStepValidationIndicators(result) {
+        // Clear all error indicators
+        this.stepsLayer.querySelectorAll('rect.step-has-errors').forEach(rect => {
+            rect.classList.remove('step-has-errors');
+        });
+
+        // Mark steps with errors
+        const stepErrors = result.stepErrors || {};
+        Object.keys(stepErrors).forEach(stepId => {
+            const stepEl = this.stepsLayer.querySelector(`[data-step-id="${stepId}"]`);
+            if (stepEl) {
+                const rect = stepEl.querySelector('rect');
+                if (rect) rect.classList.add('step-has-errors');
+            }
+        });
+
+        // Mark connections with errors
+        this.connectionsLayer.querySelectorAll('path').forEach(path => {
+            path.classList.remove('connection-error');
+        });
+
+        const connectionErrors = result.connectionErrors || {};
+        Object.keys(connectionErrors).forEach(connId => {
+            const conn = this.connectionsLayer.querySelector(`[data-connection-id="${connId}"]`);
+            if (conn) conn.classList.add('connection-error');
+        });
+    }
+
+    focusOnStep(stepId) {
+        const step = this.steps.get(stepId);
+        if (!step) return;
+
+        // Pan to center the step
+        const containerRect = this.canvasContainer.getBoundingClientRect();
+        const centerX = containerRect.width / 2;
+        const centerY = containerRect.height / 2;
+
+        this.panX = centerX - (step.position.x + 100) * this.zoom;
+        this.panY = centerY - (step.position.y + 40) * this.zoom;
+
+        this.updateCanvasTransform();
+        this.selectStep(stepId);
+        this.updateMinimap();
+    }
+
+    hideValidationPanel() {
+        const panel = document.getElementById('validationPanel');
+        if (panel) panel.classList.remove('show');
     }
 
     // ============================================
@@ -1758,58 +2020,28 @@ class WorkflowDesigner {
     }
 
     async validateWorkflow() {
-        const versionData = {
-            startStepId: this.version?.startStepId,
-            steps: Array.from(this.steps.values()),
-            connections: Object.fromEntries(this.connections)
-        };
+        // Run client-side validation using WorkflowValidator
+        const result = this.runValidation();
 
+        // Also try server-side validation if available
         try {
-            const result = await api.validateWorkflow(versionData);
-            this.showValidationResults(result);
+            const versionData = this.buildWorkflowForValidation();
+            const serverResult = await api.validateWorkflow(versionData);
+
+            // Merge server and client results
+            const mergedResult = {
+                valid: result.valid && serverResult.valid,
+                errors: [...(result.errors || []), ...(serverResult.errors || [])],
+                warnings: [...(result.warnings || []), ...(serverResult.warnings || [])],
+                stepErrors: { ...(result.stepErrors || {}), ...(serverResult.stepErrors || {}) }
+            };
+
+            this.showValidationResults(mergedResult);
+            this.updateStepValidationIndicators(mergedResult);
         } catch (error) {
-            // If API fails, do client-side validation
-            const result = this.clientSideValidation();
+            // If API fails, show client-side validation results
             this.showValidationResults(result);
         }
-    }
-
-    clientSideValidation() {
-        const errors = [];
-        const warnings = [];
-
-        if (this.steps.size === 0) {
-            errors.push({ code: 'NO_STEPS', message: 'Workflow has no steps' });
-        }
-
-        if (!this.version?.startStepId) {
-            errors.push({ code: 'NO_START', message: 'No start step defined' });
-        } else if (!this.steps.has(this.version.startStepId)) {
-            errors.push({ code: 'INVALID_START', message: 'Start step does not exist' });
-        }
-
-        // Check for orphan steps (no incoming connections except start)
-        this.steps.forEach((step, stepId) => {
-            if (stepId !== this.version?.startStepId) {
-                let hasIncoming = false;
-                this.connections.forEach(conn => {
-                    if (conn.targetStepId === stepId) hasIncoming = true;
-                });
-                if (!hasIncoming) {
-                    warnings.push({
-                        code: 'ORPHAN_STEP',
-                        message: `Step "${step.name}" has no incoming connections`,
-                        stepName: step.name
-                    });
-                }
-            }
-        });
-
-        return {
-            valid: errors.length === 0,
-            errors,
-            warnings
-        };
     }
 
     showValidationResults(result) {
