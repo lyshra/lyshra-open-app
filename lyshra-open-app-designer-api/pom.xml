@@ -95,6 +95,13 @@
             <version>3.20.0</version>
         </dependency>
 
+        <!-- JSON Schema Validator -->
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>1.5.5</version>
+        </dependency>
+
         <!-- WebSocket for real-time updates -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

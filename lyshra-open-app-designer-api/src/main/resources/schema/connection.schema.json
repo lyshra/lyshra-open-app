@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/connection.schema.json",
+  "title": "Workflow Connection",
+  "description": "Schema for connections between workflow steps",
+  "type": "object",
+  "required": ["id", "sourceStepId", "targetStepId", "type"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the connection"
+    },
+    "sourceStepId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of the source step"
+    },
+    "targetStepId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of the target step"
+    },
+    "type": {
+      "$ref": "#/$defs/ConnectionType"
+    },
+    "sourcePort": {
+      "type": "string",
+      "enum": ["output", "success", "failure", "timeout", "default", "loop"],
+      "default": "output",
+      "description": "Output port on the source step"
+    },
+    "targetPort": {
+      "type": "string",
+      "enum": ["input", "trigger"],
+      "default": "input",
+      "description": "Input port on the target step"
+    },
+    "condition": {
+      "$ref": "#/$defs/ConnectionCondition",
+      "description": "Conditional routing for this connection"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Priority for multiple connections from same source"
+    },
+    "label": {
+      "type": ["string", "null"],
+      "maxLength": 50,
+      "description": "Optional label displayed on the connection"
+    },
+    "style": {
+      "$ref": "#/$defs/ConnectionStyle",
+      "description": "Visual styling for the connection"
+    },
+    "waypoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Point"
+      },
+      "description": "Intermediate points for connection routing"
+    }
+  },
+  "$defs": {
+    "ConnectionType": {
+      "type": "string",
+      "enum": [
+        "SEQUENTIAL",
+        "CONDITIONAL",
+        "ERROR",
+        "TIMEOUT",
+        "PARALLEL",
+        "LOOP_BACK",
+        "LOOP_EXIT"
+      ],
+      "description": "Type of connection determining execution flow"
+    },
+    "ConnectionCondition": {
+      "type": "object",
+      "required": ["expression"],
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "Condition expression for this connection"
+        },
+        "expressionLanguage": {
+          "type": "string",
+          "enum": ["JAVASCRIPT", "SPEL", "GROOVY"],
+          "default": "JAVASCRIPT"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this is the default path when no conditions match"
+        }
+      }
+    },
+    "ConnectionStyle": {
+      "type": "object",
+      "properties": {
+        "strokeColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#6c757d",
+          "description": "Line color (hex)"
+        },
+        "strokeWidth": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 2,
+          "description": "Line width in pixels"
+        },
+        "strokeStyle": {
+          "type": "string",
+          "enum": ["SOLID", "DASHED", "DOTTED"],
+          "default": "SOLID",
+          "description": "Line style"
+        },
+        "animated": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to animate the connection during execution"
+        },
+        "arrowType": {
+          "type": "string",
+          "enum": ["ARROW", "FILLED_ARROW", "CIRCLE", "DIAMOND", "NONE"],
+          "default": "FILLED_ARROW",
+          "description": "Arrow head type"
+        },
+        "curveType": {
+          "type": "string",
+          "enum": ["STRAIGHT", "BEZIER", "ORTHOGONAL", "SMOOTH"],
+          "default": "BEZIER",
+          "description": "Connection curve style"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate"
+        }
+      }
+    }
+  }
+}

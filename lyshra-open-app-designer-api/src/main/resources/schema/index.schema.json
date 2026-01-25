@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/index.schema.json",
+  "title": "Lyshra OpenApp Workflow Schema Index",
+  "description": "Index of all workflow-related schemas for Lyshra OpenApp Designer",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0",
+      "description": "Version of the schema collection"
+    },
+    "schemas": {
+      "type": "object",
+      "properties": {
+        "workflowDefinition": {
+          "$ref": "workflow-definition.schema.json"
+        },
+        "workflowVersion": {
+          "$ref": "workflow-version.schema.json"
+        },
+        "workflowStep": {
+          "$ref": "workflow-step.schema.json"
+        },
+        "connection": {
+          "$ref": "connection.schema.json"
+        },
+        "processorMetadata": {
+          "$ref": "processor-metadata.schema.json"
+        },
+        "workflowExecution": {
+          "$ref": "workflow-execution.schema.json"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "SchemaInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "CommonEnums": {
+      "description": "Common enumeration types used across schemas",
+      "type": "object",
+      "properties": {
+        "WorkflowLifecycleState": {
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "ARCHIVED"]
+        },
+        "WorkflowVersionState": {
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "ARCHIVED"]
+        },
+        "ExecutionStatus": {
+          "type": "string",
+          "enum": ["PENDING", "SCHEDULED", "RUNNING", "PAUSED", "WAITING", "COMPLETED", "FAILED", "CANCELLED", "ABORTED", "TIMED_OUT"]
+        },
+        "StepType": {
+          "type": "string",
+          "enum": ["START", "END", "PROCESSOR", "SUB_WORKFLOW", "DECISION", "PARALLEL_SPLIT", "PARALLEL_JOIN", "LOOP", "WAIT", "ERROR_HANDLER"]
+        },
+        "ConnectionType": {
+          "type": "string",
+          "enum": ["SEQUENTIAL", "CONDITIONAL", "ERROR", "TIMEOUT", "PARALLEL", "LOOP_BACK", "LOOP_EXIT"]
+        },
+        "ProcessorCategory": {
+          "type": "string",
+          "enum": ["DATA_TRANSFORMATION", "DATA_VALIDATION", "API_INTEGRATION", "DATABASE", "FILE_PROCESSING", "MESSAGING", "NOTIFICATION", "SECURITY", "FLOW_CONTROL", "UTILITY", "CUSTOM"]
+        },
+        "FieldType": {
+          "type": "string",
+          "enum": ["STRING", "TEXT", "NUMBER", "BOOLEAN", "SELECT", "MULTI_SELECT", "DATE", "DATETIME", "TIME", "DURATION", "JSON", "CODE", "EXPRESSION", "PASSWORD", "URL", "EMAIL", "FILE", "COLOR", "VARIABLE_REFERENCE", "STEP_REFERENCE", "KEY_VALUE_PAIRS", "ARRAY"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/workflow-definition.schema.json",
+  "title": "Workflow Definition",
+  "description": "Schema for Lyshra OpenApp workflow definition",
+  "type": "object",
+  "required": ["id", "name", "organization", "module", "lifecycleState"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the workflow definition"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Human-readable name of the workflow"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "maxLength": 2000,
+      "description": "Optional description of the workflow purpose"
+    },
+    "organization": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Organization namespace for the workflow"
+    },
+    "module": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Module namespace within the organization"
+    },
+    "lifecycleState": {
+      "$ref": "#/$defs/WorkflowLifecycleState"
+    },
+    "activeVersionId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "ID of the currently active version"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 50
+      },
+      "uniqueItems": true,
+      "description": "Tags for categorization and search"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Custom metadata key-value pairs"
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "Username of the creator"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "versions": {
+      "type": "array",
+      "items": {
+        "$ref": "workflow-version.schema.json"
+      },
+      "description": "List of workflow versions"
+    }
+  },
+  "$defs": {
+    "WorkflowLifecycleState": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "ARCHIVED"],
+      "description": "Lifecycle state of the workflow definition"
+    }
+  }
+}

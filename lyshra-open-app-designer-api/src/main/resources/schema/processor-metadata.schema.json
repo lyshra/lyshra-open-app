@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/processor-metadata.schema.json",
+  "title": "Processor Metadata",
+  "description": "Schema for processor metadata used in the workflow designer",
+  "type": "object",
+  "required": ["type", "name", "category"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "Fully qualified processor type identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Display name of the processor"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "maxLength": 500,
+      "description": "Description of what the processor does"
+    },
+    "category": {
+      "$ref": "#/$defs/ProcessorCategory"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Bootstrap Icons name for the processor"
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "Theme color for the processor (hex)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Processor version"
+    },
+    "author": {
+      "type": ["string", "null"],
+      "description": "Author or maintainer"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for search and categorization"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PortDefinition"
+      },
+      "description": "Input port definitions"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PortDefinition"
+      },
+      "description": "Output port definitions"
+    },
+    "configurationSchema": {
+      "$ref": "#/$defs/ConfigurationSchema",
+      "description": "Schema for processor configuration"
+    },
+    "inputSchema": {
+      "type": "object",
+      "description": "JSON Schema for expected input data"
+    },
+    "outputSchema": {
+      "type": "object",
+      "description": "JSON Schema for output data"
+    },
+    "documentation": {
+      "$ref": "#/$defs/Documentation",
+      "description": "Documentation and help information"
+    },
+    "constraints": {
+      "$ref": "#/$defs/ProcessorConstraints",
+      "description": "Usage constraints and limitations"
+    },
+    "deprecated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this processor is deprecated"
+    },
+    "deprecationMessage": {
+      "type": ["string", "null"],
+      "description": "Message shown when processor is deprecated"
+    },
+    "replacedBy": {
+      "type": ["string", "null"],
+      "description": "Processor type that replaces this one"
+    }
+  },
+  "$defs": {
+    "ProcessorCategory": {
+      "type": "string",
+      "enum": [
+        "DATA_TRANSFORMATION",
+        "DATA_VALIDATION",
+        "API_INTEGRATION",
+        "DATABASE",
+        "FILE_PROCESSING",
+        "MESSAGING",
+        "NOTIFICATION",
+        "SECURITY",
+        "FLOW_CONTROL",
+        "UTILITY",
+        "CUSTOM"
+      ],
+      "description": "Category for organizing processors"
+    },
+    "PortDefinition": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Port name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["DATA", "TRIGGER", "ERROR", "SUCCESS", "FAILURE"],
+          "description": "Port type"
+        },
+        "description": {
+          "type": "string",
+          "description": "Port description"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether connection to this port is required"
+        },
+        "multiple": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether multiple connections are allowed"
+        }
+      }
+    },
+    "ConfigurationSchema": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationField"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FieldGroup"
+          }
+        }
+      }
+    },
+    "ConfigurationField": {
+      "type": "object",
+      "required": ["name", "type", "label"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name (key in configuration)"
+        },
+        "type": {
+          "$ref": "#/$defs/FieldType"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label"
+        },
+        "description": {
+          "type": "string",
+          "description": "Help text for the field"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder text"
+        },
+        "defaultValue": {
+          "description": "Default value for the field"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "validation": {
+          "$ref": "#/$defs/FieldValidation"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SelectOption"
+          },
+          "description": "Options for select/radio fields"
+        },
+        "dependsOn": {
+          "$ref": "#/$defs/FieldDependency",
+          "description": "Conditional visibility"
+        },
+        "group": {
+          "type": "string",
+          "description": "Group this field belongs to"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order within group"
+        }
+      }
+    },
+    "FieldType": {
+      "type": "string",
+      "enum": [
+        "STRING",
+        "TEXT",
+        "NUMBER",
+        "BOOLEAN",
+        "SELECT",
+        "MULTI_SELECT",
+        "DATE",
+        "DATETIME",
+        "TIME",
+        "DURATION",
+        "JSON",
+        "CODE",
+        "EXPRESSION",
+        "PASSWORD",
+        "URL",
+        "EMAIL",
+        "FILE",
+        "COLOR",
+        "VARIABLE_REFERENCE",
+        "STEP_REFERENCE",
+        "KEY_VALUE_PAIRS",
+        "ARRAY"
+      ],
+      "description": "Input field type"
+    },
+    "FieldValidation": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for validation"
+        },
+        "patternMessage": {
+          "type": "string",
+          "description": "Error message for pattern mismatch"
+        },
+        "min": {
+          "type": "number",
+          "description": "Minimum value (number) or length (string)"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value (number) or length (string)"
+        },
+        "minLength": {
+          "type": "integer",
+          "description": "Minimum string length"
+        },
+        "maxLength": {
+          "type": "integer",
+          "description": "Maximum string length"
+        },
+        "enum": {
+          "type": "array",
+          "description": "Allowed values"
+        },
+        "customValidator": {
+          "type": "string",
+          "description": "Custom validation expression"
+        }
+      }
+    },
+    "SelectOption": {
+      "type": "object",
+      "required": ["value", "label"],
+      "properties": {
+        "value": {
+          "description": "Option value"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label"
+        },
+        "description": {
+          "type": "string",
+          "description": "Option description"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Option icon"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "FieldDependency": {
+      "type": "object",
+      "required": ["field", "condition"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Field name to depend on"
+        },
+        "condition": {
+          "type": "string",
+          "enum": ["equals", "notEquals", "contains", "notEmpty", "empty", "greaterThan", "lessThan"],
+          "description": "Condition type"
+        },
+        "value": {
+          "description": "Value to compare against"
+        }
+      }
+    },
+    "FieldGroup": {
+      "type": "object",
+      "required": ["name", "label"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Group identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label"
+        },
+        "description": {
+          "type": "string"
+        },
+        "collapsible": {
+          "type": "boolean",
+          "default": true
+        },
+        "collapsed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initially collapsed"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order"
+        }
+      }
+    },
+    "Documentation": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Brief summary"
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed description (markdown)"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Example"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Link"
+          }
+        }
+      }
+    },
+    "Example": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "configuration": {
+          "type": "object"
+        },
+        "input": {
+          "type": "object"
+        },
+        "output": {
+          "type": "object"
+        }
+      }
+    },
+    "Link": {
+      "type": "object",
+      "required": ["title", "url"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "ProcessorConstraints": {
+      "type": "object",
+      "properties": {
+        "maxInstances": {
+          "type": ["integer", "null"],
+          "description": "Maximum instances per workflow"
+        },
+        "allowedInLoop": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowedInParallel": {
+          "type": "boolean",
+          "default": true
+        },
+        "requiredPredecessors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Processor types that must precede this one"
+        },
+        "incompatibleWith": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Processor types that cannot be in same workflow"
+        }
+      }
+    }
+  }
+}

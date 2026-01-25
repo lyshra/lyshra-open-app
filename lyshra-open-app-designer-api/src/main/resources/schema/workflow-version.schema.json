@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/workflow-version.schema.json",
+  "title": "Workflow Version",
+  "description": "Schema for a specific version of a workflow",
+  "type": "object",
+  "required": ["id", "workflowDefinitionId", "versionNumber", "state", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this version"
+    },
+    "workflowDefinitionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to parent workflow definition"
+    },
+    "versionNumber": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version number (e.g., 1.0.0)"
+    },
+    "state": {
+      "$ref": "#/$defs/WorkflowVersionState"
+    },
+    "changeNotes": {
+      "type": ["string", "null"],
+      "maxLength": 2000,
+      "description": "Notes describing changes in this version"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "workflow-step.schema.json"
+      },
+      "minItems": 1,
+      "description": "List of workflow steps"
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "$ref": "connection.schema.json"
+      },
+      "description": "List of connections between steps"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkflowVariable"
+      },
+      "description": "Global workflow variables"
+    },
+    "inputSchema": {
+      "$ref": "#/$defs/DataSchema",
+      "description": "Schema for workflow input data"
+    },
+    "outputSchema": {
+      "$ref": "#/$defs/DataSchema",
+      "description": "Schema for workflow output data"
+    },
+    "errorHandling": {
+      "$ref": "#/$defs/ErrorHandlingConfig",
+      "description": "Global error handling configuration"
+    },
+    "timeout": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Workflow timeout in milliseconds"
+    },
+    "canvasLayout": {
+      "$ref": "#/$defs/CanvasLayout",
+      "description": "Visual layout information for the designer"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Version creation timestamp"
+    },
+    "activatedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Timestamp when version was activated"
+    },
+    "deprecatedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Timestamp when version was deprecated"
+    }
+  },
+  "$defs": {
+    "WorkflowVersionState": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "ARCHIVED"],
+      "description": "State of the workflow version"
+    },
+    "WorkflowVariable": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+          "description": "Variable name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["STRING", "NUMBER", "BOOLEAN", "OBJECT", "ARRAY", "DATE"],
+          "description": "Data type of the variable"
+        },
+        "defaultValue": {
+          "description": "Default value for the variable"
+        },
+        "description": {
+          "type": "string",
+          "description": "Variable description"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the variable is required"
+        }
+      }
+    },
+    "DataSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["object", "array", "string", "number", "boolean"]
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/DataSchema"
+          }
+        },
+        "items": {
+          "$ref": "#/$defs/DataSchema"
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ErrorHandlingConfig": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["FAIL_FAST", "CONTINUE", "RETRY"],
+          "default": "FAIL_FAST"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
+        },
+        "retryDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1000
+        },
+        "exponentialBackoff": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "CanvasLayout": {
+      "type": "object",
+      "properties": {
+        "zoom": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 3,
+          "default": 1
+        },
+        "panX": {
+          "type": "number",
+          "default": 0
+        },
+        "panY": {
+          "type": "number",
+          "default": 0
+        },
+        "gridEnabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "snapToGrid": {
+          "type": "boolean",
+          "default": true
+        },
+        "gridSize": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 50,
+          "default": 20
+        }
+      }
+    }
+  }
+}

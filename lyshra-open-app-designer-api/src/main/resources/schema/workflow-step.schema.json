@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/workflow-step.schema.json",
+  "title": "Workflow Step",
+  "description": "Schema for a workflow step (node) definition",
+  "type": "object",
+  "required": ["id", "name", "type"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the step within the workflow"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Display name of the step"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "maxLength": 500,
+      "description": "Optional description of what this step does"
+    },
+    "type": {
+      "$ref": "#/$defs/StepType"
+    },
+    "processorType": {
+      "type": ["string", "null"],
+      "description": "Fully qualified processor type (when type is PROCESSOR)"
+    },
+    "subWorkflowId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Reference to sub-workflow (when type is SUB_WORKFLOW)"
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Processor-specific configuration"
+    },
+    "inputMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DataMapping"
+      },
+      "description": "Mappings for input data"
+    },
+    "outputMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DataMapping"
+      },
+      "description": "Mappings for output data"
+    },
+    "condition": {
+      "$ref": "#/$defs/StepCondition",
+      "description": "Conditional execution configuration"
+    },
+    "errorHandling": {
+      "$ref": "#/$defs/StepErrorHandling",
+      "description": "Step-specific error handling"
+    },
+    "timeout": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Step timeout in milliseconds"
+    },
+    "retryConfig": {
+      "$ref": "#/$defs/RetryConfig",
+      "description": "Retry configuration for this step"
+    },
+    "position": {
+      "$ref": "#/$defs/Position",
+      "description": "Visual position on canvas"
+    },
+    "style": {
+      "$ref": "#/$defs/StepStyle",
+      "description": "Visual styling for the step"
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Annotation"
+      },
+      "description": "Visual annotations attached to this step"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Custom metadata for the step"
+    }
+  },
+  "$defs": {
+    "StepType": {
+      "type": "string",
+      "enum": [
+        "START",
+        "END",
+        "PROCESSOR",
+        "SUB_WORKFLOW",
+        "DECISION",
+        "PARALLEL_SPLIT",
+        "PARALLEL_JOIN",
+        "LOOP",
+        "WAIT",
+        "ERROR_HANDLER"
+      ],
+      "description": "Type of workflow step"
+    },
+    "DataMapping": {
+      "type": "object",
+      "required": ["source", "target"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source path (e.g., 'context.previousStep.output.field')"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target path in step input/output"
+        },
+        "transform": {
+          "type": ["string", "null"],
+          "description": "Optional transformation expression"
+        },
+        "defaultValue": {
+          "description": "Default value if source is null"
+        }
+      }
+    },
+    "StepCondition": {
+      "type": "object",
+      "required": ["expression"],
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "JavaScript or SpEL expression for condition"
+        },
+        "expressionLanguage": {
+          "type": "string",
+          "enum": ["JAVASCRIPT", "SPEL", "GROOVY"],
+          "default": "JAVASCRIPT"
+        },
+        "skipOnFalse": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip step if condition is false"
+        }
+      }
+    },
+    "StepErrorHandling": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["FAIL", "SKIP", "RETRY", "FALLBACK", "GOTO"],
+          "default": "FAIL"
+        },
+        "fallbackValue": {
+          "description": "Value to use when strategy is FALLBACK"
+        },
+        "gotoStepId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Step to jump to when strategy is GOTO"
+        },
+        "errorMapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["FAIL", "SKIP", "RETRY", "FALLBACK", "GOTO"]
+          },
+          "description": "Map specific error codes to strategies"
+        }
+      }
+    },
+    "RetryConfig": {
+      "type": "object",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3
+        },
+        "initialDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1000
+        },
+        "maxDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 30000
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 1,
+          "default": 2
+        },
+        "retryableErrors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Error codes that trigger retry"
+        }
+      }
+    },
+    "Position": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate on canvas"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate on canvas"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 50,
+          "default": 180,
+          "description": "Width of the step node"
+        },
+        "height": {
+          "type": "number",
+          "minimum": 30,
+          "default": 60,
+          "description": "Height of the step node"
+        }
+      }
+    },
+    "StepStyle": {
+      "type": "object",
+      "properties": {
+        "backgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Background color (hex)"
+        },
+        "borderColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Border color (hex)"
+        },
+        "textColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Text color (hex)"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier (Bootstrap Icons name)"
+        },
+        "shape": {
+          "type": "string",
+          "enum": ["RECTANGLE", "ROUNDED", "DIAMOND", "CIRCLE", "PARALLELOGRAM"],
+          "default": "ROUNDED"
+        }
+      }
+    },
+    "Annotation": {
+      "type": "object",
+      "required": ["id", "type", "content"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["NOTE", "WARNING", "INFO", "TODO"]
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "position": {
+          "$ref": "#/$defs/Position"
+        }
+      }
+    }
+  }
+}

@@ -42,6 +42,8 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/health").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                        .pathMatchers("/login", "/register", "/designer", "/workflows", "/executions", "/monitoring", "/profile").permitAll()
+                        .pathMatchers("/api/v1/schemas/**").authenticated()
                         .pathMatchers("/api/v1/processors/**").authenticated()
                         .pathMatchers("/api/v1/workflows/**").authenticated()
                         .pathMatchers("/api/v1/executions/**").authenticated()

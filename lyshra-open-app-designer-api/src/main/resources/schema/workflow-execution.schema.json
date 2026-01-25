@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyshra.com/schemas/workflow-execution.schema.json",
+  "title": "Workflow Execution",
+  "description": "Schema for workflow execution instance",
+  "type": "object",
+  "required": ["id", "workflowDefinitionId", "workflowVersionId", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique execution identifier"
+    },
+    "workflowDefinitionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to workflow definition"
+    },
+    "workflowVersionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to specific version being executed"
+    },
+    "workflowName": {
+      "type": "string",
+      "description": "Cached workflow name for display"
+    },
+    "versionNumber": {
+      "type": "string",
+      "description": "Cached version number for display"
+    },
+    "status": {
+      "$ref": "#/$defs/ExecutionStatus"
+    },
+    "correlationId": {
+      "type": ["string", "null"],
+      "description": "External correlation identifier"
+    },
+    "triggeredBy": {
+      "type": ["string", "null"],
+      "description": "User or system that triggered execution"
+    },
+    "triggerType": {
+      "$ref": "#/$defs/TriggerType"
+    },
+    "inputData": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Input data provided at execution start"
+    },
+    "outputData": {
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "description": "Output data after successful completion"
+    },
+    "contextData": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Execution context variables"
+    },
+    "currentStepId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Currently executing step ID"
+    },
+    "currentStepName": {
+      "type": ["string", "null"],
+      "description": "Currently executing step name"
+    },
+    "errorCode": {
+      "type": ["string", "null"],
+      "description": "Error code if execution failed"
+    },
+    "errorMessage": {
+      "type": ["string", "null"],
+      "description": "Error message if execution failed"
+    },
+    "errorDetails": {
+      "type": ["object", "null"],
+      "description": "Detailed error information"
+    },
+    "stepLogs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/StepExecutionLog"
+      },
+      "description": "Log of all step executions"
+    },
+    "retryCount": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of retry attempts"
+    },
+    "parentExecutionId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Parent execution ID for sub-workflow calls"
+    },
+    "childExecutionIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "Child execution IDs for sub-workflows"
+    },
+    "scheduledAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Scheduled execution time"
+    },
+    "startedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Actual start time"
+    },
+    "completedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Completion time"
+    },
+    "duration": {
+      "type": ["integer", "null"],
+      "description": "Duration in milliseconds"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Custom execution metadata"
+    }
+  },
+  "$defs": {
+    "ExecutionStatus": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "SCHEDULED",
+        "RUNNING",
+        "PAUSED",
+        "WAITING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED",
+        "ABORTED",
+        "TIMED_OUT"
+      ],
+      "description": "Current execution status"
+    },
+    "TriggerType": {
+      "type": "string",
+      "enum": [
+        "MANUAL",
+        "API",
+        "SCHEDULE",
+        "WEBHOOK",
+        "EVENT",
+        "SUB_WORKFLOW",
+        "RETRY"
+      ],
+      "description": "How the execution was triggered"
+    },
+    "StepExecutionLog": {
+      "type": "object",
+      "required": ["id", "stepId", "stepName", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Log entry identifier"
+        },
+        "stepId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to step definition"
+        },
+        "stepName": {
+          "type": "string",
+          "description": "Step name at time of execution"
+        },
+        "stepType": {
+          "type": "string",
+          "description": "Step type"
+        },
+        "status": {
+          "$ref": "#/$defs/StepExecutionStatus"
+        },
+        "branch": {
+          "type": ["string", "null"],
+          "description": "Execution branch (for parallel execution)"
+        },
+        "attemptNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Attempt number (for retries)"
+        },
+        "inputData": {
+          "type": ["object", "null"],
+          "description": "Input data for this step"
+        },
+        "outputData": {
+          "type": ["object", "null"],
+          "description": "Output data from this step"
+        },
+        "errorCode": {
+          "type": ["string", "null"],
+          "description": "Error code if step failed"
+        },
+        "errorMessage": {
+          "type": ["string", "null"],
+          "description": "Error message if step failed"
+        },
+        "stackTrace": {
+          "type": ["string", "null"],
+          "description": "Stack trace for debugging"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LogEntry"
+          },
+          "description": "Debug log entries"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "duration": {
+          "type": ["integer", "null"],
+          "description": "Duration in milliseconds"
+        }
+      }
+    },
+    "StepExecutionStatus": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "COMPLETED",
+        "FAILED",
+        "SKIPPED",
+        "CANCELLED",
+        "TIMED_OUT"
+      ]
+    },
+    "LogEntry": {
+      "type": "object",
+      "required": ["timestamp", "level", "message"],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARN", "ERROR"]
+        },
+        "message": {
+          "type": "string"
+        },
+        "data": {
+          "type": ["object", "null"]
+        }
+      }
+    }
+  }
+}
