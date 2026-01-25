@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Lyshra OpenApp Designer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #4f46e5;
+        }
+        body {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            min-height: 100vh;
+        }
+        .hero-section {
+            padding: 4rem 0;
+            color: white;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .endpoint-card {
+            border-left: 4px solid var(--primary-color);
+        }
+        .method-badge {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        .method-get { background: #22c55e; color: white; }
+        .method-post { background: #3b82f6; color: white; }
+        .method-put { background: #f59e0b; color: white; }
+        .method-delete { background: #ef4444; color: white; }
+        .code-block {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+        .nav-link-custom {
+            color: rgba(255,255,255,0.8);
+            transition: color 0.2s;
+        }
+        .nav-link-custom:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-diagram-3"></i> Lyshra OpenApp Designer
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link nav-link-custom" href="/"><i class="bi bi-house"></i> Home</a>
+                <a class="nav-link nav-link-custom" href="/swagger-ui.html"><i class="bi bi-code-square"></i> Swagger UI</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">API Documentation</h1>
+            <p class="lead mb-4">Complete REST API reference for the Workflow Designer</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="/swagger-ui.html" class="btn btn-light btn-lg">
+                    <i class="bi bi-lightning-charge"></i> Interactive Docs
+                </a>
+                <a href="/api/v1/docs/openapi.yaml" class="btn btn-outline-light btn-lg" download>
+                    <i class="bi bi-download"></i> Download OpenAPI Spec
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="py-5">
+        <div class="container">
+            <!-- Quick Start -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="card p-4">
+                        <h3 class="mb-4"><i class="bi bi-rocket-takeoff text-primary"></i> Quick Start</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>1. Authenticate</h5>
+                                <div class="code-block mb-3">
+                                    <code>
+POST /api/v1/auth/login<br>
+Content-Type: application/json<br><br>
+{<br>
+&nbsp;&nbsp;"username": "your_username",<br>
+&nbsp;&nbsp;"password": "your_password"<br>
+}
+                                    </code>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>2. Use the Token</h5>
+                                <div class="code-block mb-3">
+                                    <code>
+GET /api/v1/workflows<br>
+Authorization: Bearer &lt;your_jwt_token&gt;<br>
+Content-Type: application/json
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Endpoints Overview -->
+            <h3 class="text-white mb-4"><i class="bi bi-collection"></i> API Endpoints</h3>
+            <div class="row g-4">
+                <!-- Authentication -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-shield-lock text-primary"></i> Authentication</h5>
+                        <p class="text-muted small">User login, registration, and token management</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/auth/login</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/auth/register</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/auth/refresh</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflows -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-diagram-3 text-primary"></i> Workflows</h5>
+                        <p class="text-muted small">Workflow definition CRUD operations</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/workflows</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="method-badge method-put">PUT</span>
+                            <span class="method-badge method-delete">DEL</span>
+                            <code class="small">/api/v1/workflows/{id}</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-put">PUT</span>
+                            <code class="small">/api/v1/workflows/{id}/state</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versions -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-clock-history text-primary"></i> Versions</h5>
+                        <p class="text-muted small">Version management and activation</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/workflows/{id}/versions</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-put">PUT</span>
+                            <code class="small">/versions/{id}/activate</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-put">PUT</span>
+                            <code class="small">/workflows/{id}/rollback</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Executions -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-play-circle text-primary"></i> Executions</h5>
+                        <p class="text-muted small">Execute and monitor workflows</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/api/v1/executions</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/executions/workflows/{id}</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/executions/stream</code>
+                            <span class="badge bg-info">SSE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processors -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-cpu text-primary"></i> Processors</h5>
+                        <p class="text-muted small">Processor metadata for designer UI</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/api/v1/processors</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/processors/{identifier}</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/processors/categories</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation & Schemas -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card endpoint-card h-100 p-3">
+                        <h5><i class="bi bi-check2-circle text-primary"></i> Validation & Schemas</h5>
+                        <p class="text-muted small">Validate workflows and access schemas</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-post">POST</span>
+                            <code class="small">/api/v1/validation/workflow</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/api/v1/schemas</code>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="method-badge method-get">GET</span>
+                            <code class="small">/schemas/bundle</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Codes -->
+            <h3 class="text-white mb-4 mt-5"><i class="bi bi-info-circle"></i> HTTP Status Codes</h3>
+            <div class="card p-4">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Status</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-success">200</span></td>
+                                <td>OK</td>
+                                <td>Request successful</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">201</span></td>
+                                <td>Created</td>
+                                <td>Resource created successfully</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">204</span></td>
+                                <td>No Content</td>
+                                <td>Resource deleted successfully</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">400</span></td>
+                                <td>Bad Request</td>
+                                <td>Validation error or malformed request</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">401</span></td>
+                                <td>Unauthorized</td>
+                                <td>Authentication required or invalid token</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">403</span></td>
+                                <td>Forbidden</td>
+                                <td>Insufficient permissions</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">404</span></td>
+                                <td>Not Found</td>
+                                <td>Resource not found</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">409</span></td>
+                                <td>Conflict</td>
+                                <td>Resource conflict (e.g., duplicate name)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">422</span></td>
+                                <td>Unprocessable Entity</td>
+                                <td>Schema validation failed</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-dark">500</span></td>
+                                <td>Internal Error</td>
+                                <td>Unexpected server error</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Error Response Format -->
+            <h3 class="text-white mb-4 mt-5"><i class="bi bi-exclamation-triangle"></i> Error Response Format</h3>
+            <div class="card p-4">
+                <div class="code-block">
+                    <code>
+{<br>
+&nbsp;&nbsp;"timestamp": "2025-01-25T10:30:00Z",<br>
+&nbsp;&nbsp;"status": 400,<br>
+&nbsp;&nbsp;"code": "VALIDATION_ERROR",<br>
+&nbsp;&nbsp;"message": "Request validation failed",<br>
+&nbsp;&nbsp;"details": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"fieldErrors": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ "field": "name", "message": "Workflow name is required" }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;}<br>
+}
+                    </code>
+                </div>
+            </div>
+
+            <!-- Documentation Links -->
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="/swagger-ui.html" class="btn btn-primary btn-lg">
+                            <i class="bi bi-lightning-charge"></i> Swagger UI
+                        </a>
+                        <a href="/v3/api-docs" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-filetype-json"></i> OpenAPI JSON
+                        </a>
+                        <a href="/api/v1/docs/openapi.yaml" class="btn btn-outline-light btn-lg" download>
+                            <i class="bi bi-filetype-yml"></i> OpenAPI YAML
+                        </a>
+                        <a href="/api/v1/schemas/bundle" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-braces"></i> JSON Schemas
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-white-50">
+        <div class="container">
+            <p class="mb-0">Lyshra OpenApp Workflow Designer &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

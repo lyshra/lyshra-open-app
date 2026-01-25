@@ -48,4 +48,9 @@ public class ViewController {
     public String profile() {
         return "index";
     }
+
+    @GetMapping("/api-docs")
+    public String apiDocs() {
+        return "api-docs";
+    }
 }

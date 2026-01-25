@@ -7,6 +7,25 @@ spring:
   webflux:
     static-path-pattern: /static/**
 
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  packages-to-scan: com.lyshra.open.app.designer.controller
+  paths-to-match: /api/**
+
 app:
   security:
     jwt:

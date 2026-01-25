@@ -1,0 +1,2161 @@
+openapi: 3.1.0
+info:
+  title: Lyshra OpenApp Workflow Designer API
+  description: |
+    REST API for the Lyshra OpenApp Workflow Designer. This API provides endpoints for:
+    - Workflow definition management (CRUD operations)
+    - Workflow version management (activation, deprecation, rollback)
+    - Workflow execution and monitoring
+    - Processor metadata retrieval for the UI
+    - Schema validation
+    - User authentication and management
+  version: 1.0.0
+  contact:
+    name: Lyshra OpenApp Team
+    email: support@lyshra.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.lyshra.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and token management
+  - name: Workflows
+    description: Workflow definition CRUD operations
+  - name: Versions
+    description: Workflow version management
+  - name: Executions
+    description: Workflow execution and monitoring
+  - name: Processors
+    description: Processor metadata for UI rendering
+  - name: Validation
+    description: Workflow validation endpoints
+  - name: Schemas
+    description: JSON schema access and validation
+  - name: Users
+    description: User management
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ============================================
+  # Authentication Endpoints
+  # ============================================
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: User registration
+      description: Register a new user account
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh JWT token
+      description: Get a new JWT token using current valid token
+      operationId: refreshToken
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================
+  # Workflow Definition Endpoints
+  # ============================================
+  /api/v1/workflows:
+    get:
+      tags:
+        - Workflows
+      summary: List all workflows
+      description: |
+        Retrieve all workflow definitions with optional filtering.
+        Supports filtering by organization, lifecycle state, and search term.
+      operationId: getAllWorkflows
+      parameters:
+        - name: organization
+          in: query
+          description: Filter by organization namespace
+          schema:
+            type: string
+            example: "acme-corp"
+        - name: state
+          in: query
+          description: Filter by lifecycle state
+          schema:
+            $ref: '#/components/schemas/WorkflowLifecycleState'
+        - name: search
+          in: query
+          description: Search term for name or description
+          schema:
+            type: string
+            example: "order processing"
+      responses:
+        '200':
+          description: List of workflow definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowDefinition'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Workflows
+      summary: Create workflow
+      description: Create a new workflow definition
+      operationId: createWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowDefinitionCreateRequest'
+            example:
+              name: "Order Processing Workflow"
+              description: "Handles order validation and fulfillment"
+              organization: "acme-corp"
+              module: "orders"
+              category: "e-commerce"
+              tags:
+                priority: "high"
+                team: "backend"
+      responses:
+        '201':
+          description: Workflow created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+          headers:
+            Location:
+              description: URL of the created resource
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/workflows/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get workflow by ID
+      description: Retrieve a specific workflow definition
+      operationId: getWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow definition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Workflows
+      summary: Update workflow
+      description: Update workflow definition metadata (not steps/connections)
+      operationId: updateWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowDefinitionUpdateRequest'
+      responses:
+        '200':
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      tags:
+        - Workflows
+      summary: Delete workflow
+      description: |
+        Delete a workflow definition. Only DRAFT or ARCHIVED workflows can be deleted.
+        All versions will also be deleted.
+      operationId: deleteWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '204':
+          description: Workflow deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot delete workflow in current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/workflows/{id}/state:
+    put:
+      tags:
+        - Workflows
+      summary: Change lifecycle state
+      description: |
+        Change the lifecycle state of a workflow.
+        Valid transitions:
+        - DRAFT → ACTIVE
+        - ACTIVE → DEPRECATED
+        - DEPRECATED → ARCHIVED
+        - DRAFT → ARCHIVED
+      operationId: changeWorkflowState
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - name: state
+          in: query
+          required: true
+          description: New lifecycle state
+          schema:
+            $ref: '#/components/schemas/WorkflowLifecycleState'
+      responses:
+        '200':
+          description: State changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+        '400':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/workflows/{id}/duplicate:
+    post:
+      tags:
+        - Workflows
+      summary: Duplicate workflow
+      description: Create a copy of an existing workflow with a new name
+      operationId: duplicateWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - name: newName
+          in: query
+          required: true
+          description: Name for the duplicated workflow
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+            example: "Order Processing Workflow (Copy)"
+      responses:
+        '201':
+          description: Workflow duplicated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ============================================
+  # Workflow Version Endpoints
+  # ============================================
+  /api/v1/workflows/{workflowId}/versions:
+    get:
+      tags:
+        - Versions
+      summary: List workflow versions
+      description: Get all versions of a workflow definition
+      operationId: getWorkflowVersions
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          description: Workflow definition ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of workflow versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Versions
+      summary: Create new version
+      description: |
+        Create a new version of a workflow.
+        The new version starts in DRAFT state.
+        Version number is auto-incremented.
+      operationId: createWorkflowVersion
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          description: Workflow definition ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersionCreateRequest'
+      responses:
+        '201':
+          description: Version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/workflows/{workflowId}/versions/active:
+    get:
+      tags:
+        - Versions
+      summary: Get active version
+      description: Get the currently active version of a workflow
+      operationId: getActiveVersion
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          description: Workflow definition ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active workflow version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No active version found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/workflows/versions/{versionId}:
+    get:
+      tags:
+        - Versions
+      summary: Get version by ID
+      description: Retrieve a specific workflow version
+      operationId: getWorkflowVersion
+      parameters:
+        - $ref: '#/components/parameters/VersionId'
+      responses:
+        '200':
+          description: Workflow version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/workflows/versions/{versionId}/activate:
+    put:
+      tags:
+        - Versions
+      summary: Activate version
+      description: |
+        Activate a workflow version.
+        Deactivates any currently active version.
+        Only DRAFT versions can be activated.
+      operationId: activateVersion
+      parameters:
+        - $ref: '#/components/parameters/VersionId'
+      responses:
+        '200':
+          description: Version activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '400':
+          description: Version cannot be activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/workflows/versions/{versionId}/deprecate:
+    put:
+      tags:
+        - Versions
+      summary: Deprecate version
+      description: |
+        Deprecate a workflow version.
+        Only ACTIVE versions can be deprecated.
+        Running executions will continue with this version.
+      operationId: deprecateVersion
+      parameters:
+        - $ref: '#/components/parameters/VersionId'
+      responses:
+        '200':
+          description: Version deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '400':
+          description: Version cannot be deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/workflows/{workflowId}/rollback:
+    put:
+      tags:
+        - Versions
+      summary: Rollback to version
+      description: |
+        Rollback to a previous version.
+        Creates a new version based on the target version and activates it.
+      operationId: rollbackToVersion
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          description: Workflow definition ID
+          schema:
+            type: string
+            format: uuid
+        - name: targetVersionId
+          in: query
+          required: true
+          description: Version ID to rollback to
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rollback successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowVersion'
+        '400':
+          description: Cannot rollback to specified version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # Workflow Execution Endpoints
+  # ============================================
+  /api/v1/executions:
+    get:
+      tags:
+        - Executions
+      summary: List executions
+      description: Get all workflow executions with optional filtering
+      operationId: getAllExecutions
+      parameters:
+        - name: workflowDefinitionId
+          in: query
+          description: Filter by workflow definition ID
+          schema:
+            type: string
+            format: uuid
+        - name: workflowVersionId
+          in: query
+          description: Filter by workflow version ID
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by execution status
+          schema:
+            $ref: '#/components/schemas/ExecutionStatus'
+        - name: startTime
+          in: query
+          description: Filter by start time (from)
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          description: Filter by start time (to)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowExecution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/executions/workflows/{workflowId}:
+    post:
+      tags:
+        - Executions
+      summary: Start execution
+      description: Start a new workflow execution
+      operationId: startExecution
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          description: Workflow definition ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecutionRequest'
+      responses:
+        '201':
+          description: Execution started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '400':
+          description: Cannot start execution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/executions/{id}:
+    get:
+      tags:
+        - Executions
+      summary: Get execution by ID
+      description: Retrieve a specific workflow execution with step logs
+      operationId: getExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/executions/running:
+    get:
+      tags:
+        - Executions
+      summary: Get running executions
+      description: Get all currently running workflow executions
+      operationId: getRunningExecutions
+      responses:
+        '200':
+          description: List of running executions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowExecution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/executions/{id}/cancel:
+    put:
+      tags:
+        - Executions
+      summary: Cancel execution
+      description: Cancel a running or pending workflow execution
+      operationId: cancelExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: Execution cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '400':
+          description: Execution cannot be cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/executions/{id}/retry:
+    post:
+      tags:
+        - Executions
+      summary: Retry execution
+      description: Retry a failed workflow execution
+      operationId: retryExecution
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '201':
+          description: Retry execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '400':
+          description: Execution cannot be retried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/executions/statistics:
+    get:
+      tags:
+        - Executions
+      summary: Get execution statistics
+      description: Get overall execution statistics
+      operationId: getExecutionStatistics
+      responses:
+        '200':
+          description: Execution statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionStatistics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/executions/statistics/workflows/{workflowId}:
+    get:
+      tags:
+        - Executions
+      summary: Get workflow statistics
+      description: Get execution statistics for a specific workflow
+      operationId: getWorkflowStatistics
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow execution statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionStatistics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/executions/stream:
+    get:
+      tags:
+        - Executions
+      summary: Stream all execution updates
+      description: |
+        Server-Sent Events stream for real-time execution updates.
+        Use this for monitoring dashboard.
+      operationId: streamAllExecutionUpdates
+      responses:
+        '200':
+          description: SSE stream of execution updates
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/executions/{id}/stream:
+    get:
+      tags:
+        - Executions
+      summary: Stream execution updates
+      description: Server-Sent Events stream for a specific execution
+      operationId: streamExecutionUpdates
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: SSE stream of execution updates
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # Processor Metadata Endpoints
+  # ============================================
+  /api/v1/processors:
+    get:
+      tags:
+        - Processors
+      summary: List all processors
+      description: |
+        Get all available processor metadata for the workflow designer.
+        Used to populate the processor palette in the UI.
+      operationId: getAllProcessors
+      parameters:
+        - name: category
+          in: query
+          description: Filter by processor category
+          schema:
+            type: string
+            example: "DATA_TRANSFORMATION"
+        - name: search
+          in: query
+          description: Search term for processor name or description
+          schema:
+            type: string
+            example: "json"
+      responses:
+        '200':
+          description: List of processor metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessorMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/processors/{identifier}:
+    get:
+      tags:
+        - Processors
+      summary: Get processor by identifier
+      description: Get detailed metadata for a specific processor
+      operationId: getProcessor
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Processor type identifier
+          schema:
+            type: string
+            example: "com.lyshra.processors.JsonTransformProcessor"
+      responses:
+        '200':
+          description: Processor metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessorMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/processors/categories:
+    get:
+      tags:
+        - Processors
+      summary: List processor categories
+      description: Get all available processor categories
+      operationId: getProcessorCategories
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example:
+                  - "DATA_TRANSFORMATION"
+                  - "DATA_VALIDATION"
+                  - "API_INTEGRATION"
+                  - "DATABASE"
+                  - "MESSAGING"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/processors/plugins/{organization}/{module}/{version}:
+    get:
+      tags:
+        - Processors
+      summary: Get processors by plugin
+      description: Get all processors from a specific plugin
+      operationId: getProcessorsByPlugin
+      parameters:
+        - name: organization
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "lyshra"
+        - name: module
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "core-processors"
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "1.0.0"
+      responses:
+        '200':
+          description: List of processors from the plugin
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessorMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/processors/refresh:
+    post:
+      tags:
+        - Processors
+      summary: Refresh processor cache
+      description: |
+        Refresh the processor metadata cache.
+        Requires ADMIN role.
+      operationId: refreshProcessorCache
+      responses:
+        '200':
+          description: Cache refreshed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ============================================
+  # Validation Endpoints
+  # ============================================
+  /api/v1/validation/workflow:
+    post:
+      tags:
+        - Validation
+      summary: Validate workflow
+      description: Perform comprehensive validation on a workflow version
+      operationId: validateWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersion'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/validation/connections:
+    post:
+      tags:
+        - Validation
+      summary: Validate connections
+      description: Validate workflow connections for cycles and completeness
+      operationId: validateConnections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersion'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/validation/steps:
+    post:
+      tags:
+        - Validation
+      summary: Validate step configurations
+      description: Validate that all steps have valid configurations
+      operationId: validateStepConfigurations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersion'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/validation/start-step:
+    post:
+      tags:
+        - Validation
+      summary: Validate start step
+      description: Validate workflow has a valid start step
+      operationId: validateStartStep
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersion'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/validation/error-handling:
+    post:
+      tags:
+        - Validation
+      summary: Validate error handling
+      description: Validate workflow error handling configuration
+      operationId: validateErrorHandling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowVersion'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================
+  # Schema Endpoints
+  # ============================================
+  /api/v1/schemas:
+    get:
+      tags:
+        - Schemas
+      summary: List available schemas
+      description: Get list of all available JSON schemas
+      operationId: listSchemas
+      responses:
+        '200':
+          description: List of schema information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    fileName:
+                      type: string
+                    available:
+                      type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/schemas/{schemaType}:
+    get:
+      tags:
+        - Schemas
+      summary: Get schema
+      description: Get a specific JSON schema by type
+      operationId: getSchema
+      parameters:
+        - name: schemaType
+          in: path
+          required: true
+          description: Schema type
+          schema:
+            type: string
+            enum:
+              - WORKFLOW_DEFINITION
+              - WORKFLOW_VERSION
+              - WORKFLOW_STEP
+              - CONNECTION
+              - PROCESSOR_METADATA
+              - WORKFLOW_EXECUTION
+      responses:
+        '200':
+          description: JSON schema
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/schemas/{schemaType}/validate:
+    post:
+      tags:
+        - Schemas
+      summary: Validate against schema
+      description: Validate JSON data against a specific schema
+      operationId: validateAgainstSchema
+      parameters:
+        - name: schemaType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Validation passed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaValidationResult'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/schemas/bundle:
+    get:
+      tags:
+        - Schemas
+      summary: Get all schemas
+      description: Get all schemas bundled in a single response for caching
+      operationId: getAllSchemasBundled
+      responses:
+        '200':
+          description: All schemas bundled
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================
+  # Health Check
+  # ============================================
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check API health status
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/v1/auth/login
+
+  parameters:
+    WorkflowId:
+      name: id
+      in: path
+      required: true
+      description: Workflow definition ID
+      schema:
+        type: string
+        format: uuid
+
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      description: Workflow version ID
+      schema:
+        type: string
+        format: uuid
+
+    ExecutionId:
+      name: id
+      in: path
+      required: true
+      description: Workflow execution ID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Bad request - validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2025-01-25T10:30:00Z"
+            status: 400
+            code: "VALIDATION_ERROR"
+            message: "Request validation failed"
+            details:
+              fieldErrors:
+                - field: "name"
+                  message: "Workflow name is required"
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2025-01-25T10:30:00Z"
+            status: 401
+            code: "UNAUTHORIZED"
+            message: "Authentication required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2025-01-25T10:30:00Z"
+            status: 403
+            code: "FORBIDDEN"
+            message: "Insufficient permissions"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2025-01-25T10:30:00Z"
+            status: 404
+            code: "NOT_FOUND"
+            message: "Workflow not found"
+            details:
+              resourceType: "WorkflowDefinition"
+              resourceId: "550e8400-e29b-41d4-a716-446655440000"
+
+    Conflict:
+      description: Conflict - resource already exists or state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2025-01-25T10:30:00Z"
+            status: 409
+            code: "CONFLICT"
+            message: "Workflow with this name already exists"
+
+  schemas:
+    # ============================================
+    # Authentication Schemas
+    # ============================================
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "john.doe"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "securePassword123"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["DEVELOPER", "OPERATOR"]
+
+    UserCreateRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
+
+    UserRole:
+      type: string
+      enum:
+        - ADMIN
+        - DEVELOPER
+        - OPERATOR
+        - VIEWER
+
+    # ============================================
+    # Workflow Definition Schemas
+    # ============================================
+    WorkflowDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        organization:
+          type: string
+        module:
+          type: string
+        lifecycleState:
+          $ref: '#/components/schemas/WorkflowLifecycleState'
+        activeVersionId:
+          type: string
+          format: uuid
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+        createdBy:
+          type: string
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    WorkflowLifecycleState:
+      type: string
+      enum:
+        - DRAFT
+        - ACTIVE
+        - DEPRECATED
+        - ARCHIVED
+      description: |
+        Lifecycle states:
+        - DRAFT: Initial state, can be edited
+        - ACTIVE: Published and can be executed
+        - DEPRECATED: Still executable but no new executions recommended
+        - ARCHIVED: Read-only, cannot be executed
+
+    WorkflowDefinitionCreateRequest:
+      type: object
+      required:
+        - name
+        - organization
+        - module
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        organization:
+          type: string
+          minLength: 1
+          maxLength: 100
+        module:
+          type: string
+          minLength: 1
+          maxLength: 100
+        category:
+          type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    WorkflowDefinitionUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    # ============================================
+    # Workflow Version Schemas
+    # ============================================
+    WorkflowVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workflowDefinitionId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+          example: "1.0.0"
+        state:
+          $ref: '#/components/schemas/WorkflowVersionState'
+        changeNotes:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowConnection'
+        designerMetadata:
+          $ref: '#/components/schemas/DesignerMetadata'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        activatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+        deprecatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    WorkflowVersionState:
+      type: string
+      enum:
+        - DRAFT
+        - ACTIVE
+        - DEPRECATED
+        - ARCHIVED
+
+    WorkflowVersionCreateRequest:
+      type: object
+      properties:
+        changeNotes:
+          type: string
+          maxLength: 2000
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowConnection'
+        designerMetadata:
+          $ref: '#/components/schemas/DesignerMetadata'
+
+    # ============================================
+    # Workflow Step Schemas
+    # ============================================
+    WorkflowStep:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/WorkflowStepType'
+        processorReference:
+          $ref: '#/components/schemas/ProcessorReference'
+        workflowReference:
+          $ref: '#/components/schemas/WorkflowReference'
+        configuration:
+          type: object
+          additionalProperties: true
+        inputMappings:
+          type: object
+          additionalProperties:
+            type: string
+        outputMappings:
+          type: object
+          additionalProperties:
+            type: string
+        errorHandling:
+          $ref: '#/components/schemas/StepErrorHandling'
+        position:
+          $ref: '#/components/schemas/StepPosition'
+
+    WorkflowStepType:
+      type: string
+      enum:
+        - START
+        - END
+        - PROCESSOR
+        - SUB_WORKFLOW
+        - DECISION
+        - PARALLEL_SPLIT
+        - PARALLEL_JOIN
+        - LOOP
+        - WAIT
+        - ERROR_HANDLER
+
+    ProcessorReference:
+      type: object
+      properties:
+        organization:
+          type: string
+        module:
+          type: string
+        version:
+          type: string
+        processorType:
+          type: string
+
+    WorkflowReference:
+      type: object
+      properties:
+        workflowId:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+        useLatest:
+          type: boolean
+          default: true
+
+    StepErrorHandling:
+      type: object
+      properties:
+        strategy:
+          $ref: '#/components/schemas/ErrorStrategy'
+        errorHandlerId:
+          type: string
+          format: uuid
+        retryPolicy:
+          $ref: '#/components/schemas/RetryPolicy'
+
+    ErrorStrategy:
+      type: string
+      enum:
+        - FAIL
+        - SKIP
+        - RETRY
+        - FALLBACK
+        - GOTO
+
+    RetryPolicy:
+      type: object
+      properties:
+        maxAttempts:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+        initialDelayMs:
+          type: integer
+          minimum: 0
+          default: 1000
+        maxDelayMs:
+          type: integer
+          minimum: 0
+          default: 30000
+        multiplier:
+          type: number
+          minimum: 1
+          default: 2
+
+    StepPosition:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        width:
+          type: number
+          default: 180
+        height:
+          type: number
+          default: 60
+
+    # ============================================
+    # Connection Schemas
+    # ============================================
+    WorkflowConnection:
+      type: object
+      required:
+        - id
+        - sourceStepId
+        - targetStepId
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        sourceStepId:
+          type: string
+          format: uuid
+        targetStepId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/ConnectionType'
+        sourcePort:
+          type: string
+          default: "output"
+        targetPort:
+          type: string
+          default: "input"
+        condition:
+          type: string
+          description: SpEL or JavaScript expression for conditional routing
+        priority:
+          type: integer
+          default: 0
+        label:
+          type: string
+
+    ConnectionType:
+      type: string
+      enum:
+        - SEQUENTIAL
+        - CONDITIONAL
+        - ERROR
+        - TIMEOUT
+        - PARALLEL
+        - LOOP_BACK
+        - LOOP_EXIT
+
+    DesignerMetadata:
+      type: object
+      properties:
+        zoom:
+          type: number
+          default: 1
+        panX:
+          type: number
+          default: 0
+        panY:
+          type: number
+          default: 0
+        gridEnabled:
+          type: boolean
+          default: true
+        snapToGrid:
+          type: boolean
+          default: true
+
+    # ============================================
+    # Execution Schemas
+    # ============================================
+    WorkflowExecution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        workflowDefinitionId:
+          type: string
+          format: uuid
+        workflowVersionId:
+          type: string
+          format: uuid
+        workflowName:
+          type: string
+        versionNumber:
+          type: string
+        status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        correlationId:
+          type: string
+        triggeredBy:
+          type: string
+        inputData:
+          type: object
+          additionalProperties: true
+        outputData:
+          type: object
+          additionalProperties: true
+        currentStepId:
+          type: string
+          format: uuid
+        currentStepName:
+          type: string
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        stepLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepExecutionLog'
+        retryCount:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    ExecutionStatus:
+      type: string
+      enum:
+        - PENDING
+        - SCHEDULED
+        - RUNNING
+        - PAUSED
+        - WAITING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+        - ABORTED
+        - TIMED_OUT
+
+    WorkflowExecutionRequest:
+      type: object
+      properties:
+        inputData:
+          type: object
+          additionalProperties: true
+          description: Input data for the workflow
+        correlationId:
+          type: string
+          description: External correlation identifier
+        versionId:
+          type: string
+          format: uuid
+          description: Specific version to execute (optional, defaults to active)
+        async:
+          type: boolean
+          default: true
+          description: Whether to execute asynchronously
+
+    StepExecutionLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        stepId:
+          type: string
+          format: uuid
+        stepName:
+          type: string
+        status:
+          $ref: '#/components/schemas/StepExecutionStatus'
+        branch:
+          type: string
+        attemptNumber:
+          type: integer
+        inputData:
+          type: object
+        outputData:
+          type: object
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    StepExecutionStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - SKIPPED
+        - CANCELLED
+        - TIMED_OUT
+
+    ExecutionStatistics:
+      type: object
+      properties:
+        totalExecutions:
+          type: integer
+        runningExecutions:
+          type: integer
+        completedExecutions:
+          type: integer
+        failedExecutions:
+          type: integer
+        cancelledExecutions:
+          type: integer
+        successRate:
+          type: number
+          format: double
+        averageDuration:
+          type: string
+          format: duration
+        minDuration:
+          type: string
+          format: duration
+        maxDuration:
+          type: string
+          format: duration
+        executionsToday:
+          type: integer
+        executionsThisWeek:
+          type: integer
+
+    # ============================================
+    # Processor Metadata Schemas
+    # ============================================
+    ProcessorMetadata:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: Unique processor identifier
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        icon:
+          type: string
+          description: Bootstrap Icons name
+        color:
+          type: string
+          pattern: '^#[0-9a-fA-F]{6}$'
+        organization:
+          type: string
+        module:
+          type: string
+        version:
+          type: string
+        inputFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessorInputField'
+        inputSchema:
+          type: object
+          description: JSON Schema for input data
+        outputSchema:
+          type: object
+          description: JSON Schema for output data
+        deprecated:
+          type: boolean
+          default: false
+        deprecationMessage:
+          type: string
+
+    ProcessorInputField:
+      type: object
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/ProcessorFieldType'
+        description:
+          type: string
+        required:
+          type: boolean
+          default: false
+        defaultValue:
+          description: Default value (type varies)
+        placeholder:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldOption'
+        validation:
+          type: object
+          properties:
+            pattern:
+              type: string
+            min:
+              type: number
+            max:
+              type: number
+            minLength:
+              type: integer
+            maxLength:
+              type: integer
+
+    ProcessorFieldType:
+      type: string
+      enum:
+        - STRING
+        - TEXT
+        - NUMBER
+        - BOOLEAN
+        - SELECT
+        - MULTI_SELECT
+        - DATE
+        - DATETIME
+        - JSON
+        - CODE
+        - EXPRESSION
+        - PASSWORD
+        - URL
+        - EMAIL
+        - KEY_VALUE_PAIRS
+
+    FieldOption:
+      type: object
+      properties:
+        value:
+          description: Option value
+        label:
+          type: string
+        description:
+          type: string
+
+    # ============================================
+    # Validation Schemas
+    # ============================================
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationWarning'
+
+    ValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        stepId:
+          type: string
+          format: uuid
+        fieldPath:
+          type: string
+        severity:
+          type: string
+          enum: [ERROR, CRITICAL]
+
+    ValidationWarning:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        stepId:
+          type: string
+          format: uuid
+        suggestion:
+          type: string
+
+    SchemaValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        schemaType:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaValidationError'
+        errorCount:
+          type: integer
+
+    SchemaValidationError:
+      type: object
+      properties:
+        path:
+          type: string
+          description: JSON path to the invalid field
+        message:
+          type: string
+        keyword:
+          type: string
+        expected:
+          type: string
+        actual:
+          description: Actual value that failed validation
+        schemaPath:
+          type: string
+
+    # ============================================
+    # Error Response Schema
+    # ============================================
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - code
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          description: HTTP status code
+        code:
+          type: string
+          description: Application error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
