@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: lyshra-openapp-designer
+  webflux:
+    static-path-pattern: /static/**
+
+app:
+  security:
+    jwt:
+      secret: lyshra-openapp-designer-jwt-secret-key-change-this-in-production
+      expiration-hours: 24
+
+logging:
+  level:
+    root: INFO
+    com.lyshra.open.app.designer: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
