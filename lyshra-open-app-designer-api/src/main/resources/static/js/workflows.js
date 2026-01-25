@@ -49,6 +49,10 @@ function renderWorkflows(workflows) {
                                 <i class="bi bi-clock-history"></i> Versions</a></li>
                             <li><a class="dropdown-item" href="#" onclick="duplicateWorkflow('${wf.id}')">
                                 <i class="bi bi-copy"></i> Duplicate</a></li>
+                            ${wf.lifecycleState === 'ACTIVE' ? `
+                                <li><a class="dropdown-item text-success" href="/execute?workflow=${wf.id}">
+                                    <i class="bi bi-play-fill"></i> Execute</a></li>
+                            ` : ''}
                             <li><hr class="dropdown-divider"></li>
                             ${wf.lifecycleState === 'DRAFT' ? `
                                 <li><a class="dropdown-item text-success" href="#" onclick="activateWorkflow('${wf.id}')">

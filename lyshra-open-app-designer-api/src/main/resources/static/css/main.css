@@ -1294,6 +1294,196 @@
 }
 
 /* ============================================
+   Execution Trigger Styles
+   ============================================ */
+
+.execution-trigger {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.execution-trigger .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+/* Workflow Info */
+.workflow-info {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.workflow-icon {
+    width: 60px;
+    height: 60px;
+    background: #e7f1ff;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Version Options */
+.version-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.version-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.version-option:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+}
+
+.version-option.selected {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.version-option.recommended {
+    border-color: #198754;
+}
+
+.version-option.recommended.selected {
+    background: #d1e7dd;
+    border-color: #198754;
+}
+
+.version-radio {
+    padding-top: 0.25rem;
+}
+
+.version-radio input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.version-details {
+    flex: 1;
+}
+
+/* JSON Editor */
+.json-editor-container {
+    position: relative;
+}
+
+.json-editor-container textarea {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #3c3c3c;
+    resize: vertical;
+}
+
+.json-editor-container textarea:focus {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.json-editor-container textarea::placeholder {
+    color: #6c757d;
+}
+
+.json-error {
+    background: #f8d7da;
+    color: #842029;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+    font-size: 0.875rem;
+    margin-top: -1px;
+}
+
+/* Execution Preview */
+.execution-preview {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.execution-summary h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Execution Started */
+.execution-started {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.success-icon {
+    animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Confirmation Modal */
+#confirmExecutionModal .code-block {
+    max-height: 200px;
+    overflow: auto;
+    font-size: 0.8rem;
+}
+
+/* Input Help Text */
+.input-help {
+    font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .execution-trigger .card-header {
+        flex-wrap: wrap;
+    }
+
+    .execution-trigger .btn-group {
+        margin-top: 0.5rem;
+    }
+
+    .version-option {
+        flex-direction: column;
+    }
+
+    .version-radio {
+        order: -1;
+    }
+}
+
+/* ============================================
    Print Styles
    ============================================ */
 @media print {

@@ -44,6 +44,11 @@ public class ViewController {
         return "executions";
     }
 
+    @GetMapping("/execute")
+    public String execute() {
+        return "execute";
+    }
+
     @GetMapping("/monitoring")
     public String monitoring() {
         return "monitoring";
