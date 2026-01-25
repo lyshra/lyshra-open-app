@@ -65,15 +65,22 @@
         </div>
     </main>
 
-    <!-- Version Modal -->
+    <!-- Version Modal (Enhanced) -->
     <div class="modal fade" id="versionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-clock-history"></i> Version History</h5>
+                    <h5 class="modal-title"><i class="bi bi-layers"></i> Version Management</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="versionList">
+                <div class="modal-body" id="versionModalBody">
+                    <!-- Version manager content loaded dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <a id="btnOpenVersionPage" href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right"></i> Open Full Page
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -81,6 +88,7 @@
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
     <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+    <script th:src="@{/static/js/version-manager.js}"></script>
     <script th:src="@{/static/js/workflows.js}"></script>
 </body>
 </html>

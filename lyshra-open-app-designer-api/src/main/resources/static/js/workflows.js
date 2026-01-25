@@ -113,48 +113,46 @@ function filterWorkflows() {
 
 async function showVersions(workflowId) {
     try {
-        const versions = await api.getVersions(workflowId);
+        const workflow = allWorkflows.find(w => w.id === workflowId);
         const modal = document.getElementById('versionModal');
-        const body = document.getElementById('versionList');
+        const body = document.getElementById('versionModalBody');
 
-        if (!versions || versions.length === 0) {
-            body.innerHTML = '<p class="text-muted text-center">No versions found</p>';
-        } else {
-            body.innerHTML = `
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Version</th>
-                                <th>State</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${versions.map(v => `
-                                <tr>
-                                    <td><strong>${v.versionNumber}</strong></td>
-                                    <td><span class="badge ${getStatusBadgeClass(v.state)}">${v.state}</span></td>
-                                    <td>${formatDate(v.createdAt)}</td>
-                                    <td>
-                                        ${v.state !== 'ACTIVE' ? `
-                                            <button class="btn btn-sm btn-outline-success" onclick="activateVersion('${v.id}')">
-                                                Activate
-                                            </button>
-                                        ` : ''}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+        // Set up full page link
+        document.getElementById('btnOpenVersionPage').href = `/versions?id=${workflowId}`;
+
+        // Show loading state
+        body.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-            `;
-        }
+            </div>
+        `;
 
         new bootstrap.Modal(modal).show();
+
+        // Initialize version manager in modal
+        if (!window.modalVersionManager) {
+            window.modalVersionManager = new VersionManager({
+                workflowId: workflowId,
+                workflowName: workflow?.name || 'Workflow',
+                onVersionChange: () => {
+                    loadWorkflows();
+                }
+            });
+        } else {
+            window.modalVersionManager.workflowId = workflowId;
+            window.modalVersionManager.workflowName = workflow?.name || 'Workflow';
+        }
+
+        await window.modalVersionManager.init(body, workflowId);
     } catch (error) {
-        alert('Failed to load versions: ' + error.message);
+        console.error('Failed to load versions:', error);
+        document.getElementById('versionModalBody').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> Failed to load versions: ${error.message}
+            </div>
+        `;
     }
 }
 

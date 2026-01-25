@@ -34,6 +34,11 @@ public class ViewController {
         return "workflows";
     }
 
+    @GetMapping("/versions")
+    public String versions() {
+        return "versions";
+    }
+
     @GetMapping("/executions")
     public String executions() {
         return "executions";
