@@ -10,48 +10,76 @@
     --canvas-bg: #f8f9fa;
     --step-bg: #ffffff;
     --step-border: #dee2e6;
+    --step-header-bg: #e9ecef;
     --connection-color: #6c757d;
+    --port-color: #adb5bd;
+    --port-hover-color: #0d6efd;
+    --port-error-color: #dc3545;
 }
 
-/* Canvas styles */
+/* ============================================
+   Canvas Container
+   ============================================ */
 .bg-canvas {
     background-color: var(--canvas-bg);
+    position: relative;
+}
+
+#canvasContainer {
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 #workflowCanvas {
-    cursor: grab;
+    cursor: default;
+    background-color: var(--canvas-bg);
 }
 
-#workflowCanvas:active {
+#workflowCanvas.panning {
     cursor: grabbing;
 }
 
-/* Workflow step node */
+/* ============================================
+   Workflow Step Node
+   ============================================ */
 .workflow-step {
     cursor: move;
 }
 
-.workflow-step rect {
+.workflow-step .step-body {
     fill: var(--step-bg);
     stroke: var(--step-border);
     stroke-width: 2;
-    rx: 8;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
-.workflow-step:hover rect {
+.workflow-step .step-header {
+    fill: var(--step-header-bg);
+}
+
+.workflow-step .step-header-bottom {
+    fill: var(--step-header-bg);
+}
+
+.workflow-step:hover .step-body {
     stroke: var(--primary-color);
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
-.workflow-step.selected rect {
+.workflow-step.selected .step-body {
     stroke: var(--primary-color);
     stroke-width: 3;
+    filter: drop-shadow(0 4px 12px rgba(13, 110, 253, 0.3));
 }
 
-.workflow-step.start-step rect {
+.workflow-step.start-step .step-body {
     stroke: var(--success-color);
     stroke-width: 3;
+}
+
+.workflow-step.start-step.selected .step-body {
+    stroke: var(--success-color);
+    filter: drop-shadow(0 4px 12px rgba(25, 135, 84, 0.3));
 }
 
 .workflow-step text {
@@ -60,30 +88,206 @@
     pointer-events: none;
 }
 
-.workflow-step .step-icon {
-    fill: var(--secondary-color);
+.workflow-step .step-name {
+    font-weight: 600;
+    font-size: 11px;
 }
 
-/* Connection lines */
+.workflow-step .step-type {
+    fill: var(--secondary-color);
+    font-size: 10px;
+}
+
+.workflow-step .step-icon-text {
+    font-family: 'bootstrap-icons';
+    fill: var(--secondary-color);
+    font-size: 14px;
+}
+
+.workflow-step .start-indicator {
+    fill: var(--success-color);
+}
+
+/* ============================================
+   Connection Ports
+   ============================================ */
+.connection-ports {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.workflow-step:hover .connection-ports,
+.workflow-step.selected .connection-ports {
+    opacity: 1;
+}
+
+.port {
+    fill: var(--step-bg);
+    stroke: var(--port-color);
+    stroke-width: 2;
+    cursor: crosshair;
+    transition: all 0.15s ease;
+}
+
+.port:hover {
+    fill: var(--primary-color);
+    stroke: var(--primary-color);
+    transform: scale(1.2);
+}
+
+.port-output:hover {
+    fill: var(--primary-color);
+    stroke: var(--primary-color);
+}
+
+.port-input:hover {
+    fill: var(--success-color);
+    stroke: var(--success-color);
+}
+
+.port-error {
+    stroke: var(--port-error-color);
+}
+
+.port-error:hover {
+    fill: var(--port-error-color);
+    stroke: var(--port-error-color);
+}
+
+.port-highlight {
+    fill: var(--success-color) !important;
+    stroke: var(--success-color) !important;
+    transform: scale(1.3);
+}
+
+/* ============================================
+   Connection Lines
+   ============================================ */
 .connection-line {
     fill: none;
     stroke: var(--connection-color);
     stroke-width: 2;
     marker-end: url(#arrowhead);
-    transition: stroke 0.2s ease;
+    transition: stroke 0.15s ease, stroke-width 0.15s ease;
 }
 
-.connection-line:hover {
+.connection-hit-area {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 20;
+    cursor: pointer;
+}
+
+.connection-line:hover,
+.connection-group:hover .connection-line {
     stroke: var(--primary-color);
     stroke-width: 3;
 }
 
-.connection-line.selected {
+.connection-group.selected .connection-line {
     stroke: var(--primary-color);
     stroke-width: 3;
 }
 
-/* Processor palette */
+.connection-line.error-connection {
+    stroke: var(--danger-color);
+    stroke-dasharray: 5, 3;
+}
+
+.connection-line.error-connection:hover {
+    stroke: #b02a37;
+}
+
+.connection-line.temp-connection {
+    stroke-dasharray: 8, 4;
+    opacity: 0.7;
+}
+
+/* ============================================
+   Minimap
+   ============================================ */
+#minimap {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 180px;
+    height: 120px;
+    background: white;
+    border: 1px solid var(--step-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 100;
+}
+
+#minimap canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#minimap .minimap-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--step-border);
+}
+
+/* ============================================
+   Zoom Indicator
+   ============================================ */
+.zoom-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 6px 12px;
+    border: 1px solid var(--step-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.zoom-controls .btn {
+    padding: 4px 8px;
+}
+
+#zoomIndicator {
+    min-width: 45px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--secondary-color);
+}
+
+/* ============================================
+   Canvas Toolbar
+   ============================================ */
+.canvas-toolbar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.canvas-toolbar .btn-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Processor Palette
+   ============================================ */
 .processor-category {
     margin-bottom: 1rem;
 }
@@ -94,10 +298,16 @@
     color: var(--secondary-color);
     padding: 0.5rem 0;
     cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .processor-category-header:hover {
     color: var(--primary-color);
+}
+
+.processor-category-header .badge {
+    font-size: 0.7rem;
 }
 
 .processor-item {
@@ -107,16 +317,20 @@
     border: 1px solid var(--step-border);
     border-radius: 0.5rem;
     cursor: grab;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .processor-item:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(4px);
 }
 
-.processor-item:active {
+.processor-item:active,
+.processor-item.dragging {
     cursor: grabbing;
+    opacity: 0.7;
+    transform: scale(0.98);
 }
 
 .processor-item .processor-icon {
@@ -128,6 +342,12 @@
     background: var(--canvas-bg);
     border-radius: 0.375rem;
     margin-right: 0.75rem;
+    color: var(--secondary-color);
+}
+
+.processor-item:hover .processor-icon {
+    background: rgba(13, 110, 253, 0.1);
+    color: var(--primary-color);
 }
 
 .processor-item .processor-name {
@@ -139,20 +359,31 @@
     font-size: 0.75rem;
     color: var(--secondary-color);
     margin-top: 0.25rem;
+    line-height: 1.3;
 }
 
-/* Properties panel */
+/* ============================================
+   Properties Panel
+   ============================================ */
 .property-group {
     margin-bottom: 1.5rem;
 }
 
 .property-group-header {
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--secondary-color);
+    text-transform: uppercase;
     border-bottom: 1px solid var(--step-border);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.property-group-header i {
+    font-size: 0.9rem;
 }
 
 .property-field {
@@ -160,12 +391,15 @@
 }
 
 .property-field label {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
+    color: #495057;
 }
 
-/* Code editor */
+/* ============================================
+   Code Editor
+   ============================================ */
 .code-editor {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 0.875rem;
@@ -176,9 +410,17 @@
     border-radius: 0.375rem;
     min-height: 150px;
     resize: vertical;
+    border: none;
 }
 
-/* Status badges */
+.code-editor:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
 .status-badge {
     padding: 0.25rem 0.75rem;
     border-radius: 1rem;
@@ -193,7 +435,9 @@
 .status-failed { background: #f8d7da; color: #842029; }
 .status-cancelled { background: #fff3cd; color: #664d03; }
 
-/* Activity feed */
+/* ============================================
+   Activity Feed
+   ============================================ */
 .activity-item {
     padding: 0.75rem;
     border-left: 3px solid var(--step-border);
@@ -212,7 +456,9 @@
     color: var(--secondary-color);
 }
 
-/* Running execution card */
+/* ============================================
+   Running Execution Card
+   ============================================ */
 .running-execution-card {
     padding: 0.75rem;
     background: white;
@@ -225,14 +471,16 @@
     height: 4px;
 }
 
-/* Workflow card */
+/* ============================================
+   Workflow Card
+   ============================================ */
 .workflow-card {
     transition: all 0.2s ease;
 }
 
 .workflow-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .workflow-card .card-header {
@@ -240,31 +488,109 @@
     border-bottom: 1px solid var(--step-border);
 }
 
-/* Validation results */
+/* ============================================
+   Validation Results
+   ============================================ */
 .validation-error {
-    padding: 0.5rem;
+    padding: 0.75rem;
     background: #f8d7da;
     border-radius: 0.375rem;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
+    border-left: 3px solid var(--danger-color);
 }
 
 .validation-warning {
-    padding: 0.5rem;
+    padding: 0.75rem;
     background: #fff3cd;
     border-radius: 0.375rem;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
+    border-left: 3px solid var(--warning-color);
 }
 
 .validation-success {
-    padding: 1rem;
+    padding: 2rem;
     background: #d1e7dd;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     text-align: center;
 }
 
-/* Animation */
+/* ============================================
+   Context Menu
+   ============================================ */
+#contextMenu {
+    position: fixed;
+    z-index: 1050;
+    min-width: 180px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#contextMenu .dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+#contextMenu .dropdown-item i {
+    margin-right: 0.5rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* ============================================
+   Tooltips
+   ============================================ */
+.canvas-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+/* ============================================
+   Keyboard Hints
+   ============================================ */
+.keyboard-hints {
+    position: absolute;
+    bottom: 16px;
+    left: 220px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--step-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    color: var(--secondary-color);
+    z-index: 100;
+}
+
+.keyboard-hints kbd {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+}
+
+/* ============================================
+   Grid Snap Button
+   ============================================ */
+.btn-snap-grid.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.5; }
@@ -275,10 +601,75 @@
     animation: pulse 2s infinite;
 }
 
-/* Responsive adjustments */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.2s ease;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 992px) {
+    #minimap {
+        width: 140px;
+        height: 90px;
+    }
+
+    .keyboard-hints {
+        display: none;
+    }
+}
+
 @media (max-width: 768px) {
     .processor-palette,
     .properties-panel {
         width: 100% !important;
+    }
+
+    #minimap {
+        display: none;
+    }
+
+    .zoom-controls {
+        bottom: 8px;
+        left: 8px;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .processor-palette,
+    .properties-panel,
+    .canvas-toolbar,
+    #minimap,
+    .zoom-controls,
+    .keyboard-hints {
+        display: none !important;
+    }
+
+    #canvasContainer {
+        overflow: visible !important;
     }
 }
