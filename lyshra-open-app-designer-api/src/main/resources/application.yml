@@ -7,6 +7,36 @@ spring:
   webflux:
     static-path-pattern: /static/**
 
+  # R2DBC Database Configuration (H2 for development)
+  r2dbc:
+    url: r2dbc:h2:mem:///lyshra_designer;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+
+  # Flyway Configuration for migrations (uses JDBC)
+  flyway:
+    enabled: true
+    url: jdbc:h2:mem:lyshra_designer;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    user: sa
+    password:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  # Jackson configuration for JSON serialization
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:
@@ -31,10 +61,51 @@ app:
     jwt:
       secret: lyshra-openapp-designer-jwt-secret-key-change-this-in-production
       expiration-hours: 24
+  persistence:
+    # Set to 'inmemory' to use in-memory repositories (for testing)
+    # Set to 'database' to use persistent database storage
+    mode: database
 
 logging:
   level:
     root: INFO
     com.lyshra.open.app.designer: DEBUG
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.h2: INFO
+    org.flywaydb: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+---
+# Production profile
+spring:
+  config:
+    activate:
+      on-profile: production
+
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lyshra_designer}
+    username: ${DB_USER:lyshra}
+    password: ${DB_PASSWORD:lyshra_secret}
+    pool:
+      enabled: true
+      initial-size: 10
+      max-size: 50
+      max-idle-time: 30m
+
+  flyway:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lyshra_designer}
+    user: ${DB_USER:lyshra}
+    password: ${DB_PASSWORD:lyshra_secret}
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-this-in-production}
+      expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+
+logging:
+  level:
+    root: WARN
+    com.lyshra.open.app.designer: INFO
+    org.springframework.r2dbc: WARN
