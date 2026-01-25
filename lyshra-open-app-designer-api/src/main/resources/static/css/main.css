@@ -1484,6 +1484,277 @@
 }
 
 /* ============================================
+   Execution Dashboard Styles
+   ============================================ */
+
+.execution-dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Health Indicator */
+.health-indicator {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.health-status {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+}
+
+.health-status.healthy {
+    background: #d1e7dd;
+    color: #198754;
+}
+
+.health-status.warning {
+    background: #fff3cd;
+    color: #fd7e14;
+}
+
+.health-status.critical {
+    background: #f8d7da;
+    color: #dc3545;
+}
+
+.health-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.health-text strong {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.health-text span {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.health-details {
+    border-top: 1px solid #dee2e6;
+    padding-top: 0.75rem;
+}
+
+.health-details > div {
+    padding: 0.25rem 0;
+}
+
+/* Quick Filters */
+.quick-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.quick-filter.active {
+    font-weight: 600;
+}
+
+/* Execution Table */
+.execution-table {
+    font-size: 0.9rem;
+}
+
+.execution-table th {
+    white-space: nowrap;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.execution-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.execution-table th.sortable:hover {
+    background: #f8f9fa;
+}
+
+.execution-table th.sortable i {
+    opacity: 0.3;
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+}
+
+.execution-row {
+    transition: background-color 0.2s;
+}
+
+.execution-row:hover {
+    background-color: #f8f9fa;
+}
+
+.execution-row.row-failed {
+    background-color: #fff5f5;
+}
+
+.execution-row.row-failed:hover {
+    background-color: #ffebeb;
+}
+
+/* Owner Avatar */
+.owner-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Running Indicator */
+.running-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0d6efd;
+    margin-left: 0.5rem;
+    animation: pulse-running 1.5s infinite;
+}
+
+@keyframes pulse-running {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Step Timeline in Detail Modal */
+.step-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.step-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.step-item {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.step-item:last-child {
+    padding-bottom: 0;
+}
+
+.step-marker {
+    position: absolute;
+    left: -2rem;
+    top: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: #fff;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+    z-index: 1;
+}
+
+.step-item.step-completed .step-marker {
+    background: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+.step-item.step-failed .step-marker {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+.step-item.step-running .step-marker {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    animation: pulse-running 1.5s infinite;
+}
+
+.step-content {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.step-item.step-failed .step-content {
+    background: #fff5f5;
+}
+
+/* Dashboard Stat Cards */
+.stat-card.stat-running .stat-icon { color: #0d6efd; }
+.stat-card.stat-success .stat-icon { color: #198754; }
+.stat-card.stat-failed .stat-icon { color: #dc3545; }
+
+/* Code Block in Modals */
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 992px) {
+    .health-overview .row {
+        flex-direction: column-reverse;
+    }
+
+    .quick-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .quick-filters .btn-group {
+        flex-wrap: wrap;
+    }
+
+    .quick-filters .ms-auto {
+        margin-left: 0 !important;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .execution-table {
+        font-size: 0.8rem;
+    }
+
+    .owner-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 0.65rem;
+    }
+}
+
+/* ============================================
    Print Styles
    ============================================ */
 @media print {
